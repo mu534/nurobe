@@ -1,3 +1,13 @@
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { LandingPage } from "./app/pages/LandingPage";
+
 export default function App() {
-  return <h1 className="text-3xl font-bold underline">Hello world!</h1>;
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        {/* Define other routes here */}
+      </Routes>
+    </BrowserRouter>
+  );
 }
