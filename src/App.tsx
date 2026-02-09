@@ -17,7 +17,7 @@ export default function App() {
         <Route path="/booking" element={<BookingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/contact" element={<ContactPage />} />
-        {/* Define other routes here */}
+        {/* admin Routes */}
       </Routes>
     </BrowserRouter>
   );
