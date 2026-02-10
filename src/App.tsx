@@ -1,5 +1,3 @@
-import "@radix-ui/themes/styles.css";
-
 import {
   BrowserRouter as Router,
   Routes,
