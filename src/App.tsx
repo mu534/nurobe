@@ -1,4 +1,6 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import "@radix-ui/themes/styles.css";
+
+import { Routes, Route, Navigate } from "react-router-dom";
 import { LandingPage } from "./app/pages/LandingPage";
 import { BookingPage } from "./app/pages/BookingPage";
 import { RoomDetailsPage } from "./app/pages/RoomDetails";
@@ -12,23 +14,21 @@ import { AdminRooms } from "./app/pages/admin/AdminRooms";
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/rooms" element={<RoomsPage />} />
-        <Route path="/room/:id" element={<RoomDetailsPage />} />
-        <Route path="/booking" element={<BookingPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/contact" element={<ContactPage />} />
-        {/* admin Routes */}
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/rooms" element={<AdminRooms />} />
-        <Route path="/admin/bookings" element={<AdminBookings />} />
-        <Route path="/admin/payments" element={<AdminPayments />} />
-        {/* Catch all - redirect to home */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/rooms" element={<RoomsPage />} />
+      <Route path="/room/:id" element={<RoomDetailsPage />} />
+      <Route path="/booking" element={<BookingPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/contact" element={<ContactPage />} />
+      {/* admin Routes */}
+      <Route path="/admin" element={<AdminDashboard />} />
+      <Route path="/admin/rooms" element={<AdminRooms />} />
+      <Route path="/admin/bookings" element={<AdminBookings />} />
+      <Route path="/admin/payments" element={<AdminPayments />} />
+      {/* Catch all - redirect to home */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
