@@ -4,6 +4,7 @@ import nurobe from "../../assets/images/nurobe.png";
 
 import { Search, MapPin, Users, Calendar } from "lucide-react";
 import { rooms } from "../data/hotelData";
+import { GuestReviews } from "../components/GuestReviews";
 
 export function LandingPage() {
   const [checkIn, setCheckIn] = useState("");
@@ -185,6 +186,8 @@ export function LandingPage() {
           </Link>
         </div>
       </section>
+
+      <GuestReviews />
 
       {/* About Section */}
       <section className="bg-gray-50 py-20">
