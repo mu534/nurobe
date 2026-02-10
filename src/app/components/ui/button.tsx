@@ -3,7 +3,7 @@ import { Slot } from "@radix-ui/react-slot";
 import type { VariantProps } from "class-variance-authority";
 
 import { cn } from "./utils";
-import { buttonVariants } from "./button-variants";
+import { buttonVariants } from "./button-variants"; // import only
 
 function Button({
   className,
@@ -20,7 +20,7 @@ function Button({
   return (
     <Comp
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(buttonVariants({ variant, size }), className)}
       {...props}
     />
   );
