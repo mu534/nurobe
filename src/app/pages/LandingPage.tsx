@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import nurobe from "../../assets/images/nurobe.png";
+
 import { Search, MapPin, Users, Calendar } from "lucide-react";
 import { rooms } from "../data/hotelData";
 
@@ -41,7 +43,7 @@ export function LandingPage() {
       {/* Hero Section */}
       <section className="relative h-[70vh] md:h-[85vh] overflow-hidden">
         <img
-          src="https://images.unsplash.com/photo-1723465308831-29da05e011f3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBob3RlbCUyMGV4dGVyaW9yfGVufDF8fHx8MTc3MDYwNTE4NXww&ixlib=rb-4.1.0&q=80&w=1080"
+          src={nurobe}
           alt="Nurobe Hotel"
           className="w-full h-full object-cover"
         />
