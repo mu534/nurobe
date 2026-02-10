@@ -212,8 +212,8 @@ export const rooms: Room[] = [
 export const bookings: Booking[] = [
   {
     id: 1,
-    guestName: "Abebe Kebede",
-    email: "abebe@email.com",
+    guestName: "mudasir najimudin",
+    email: "mudasir@email.com",
     roomId: 1,
     roomName: "Standard Room",
     checkIn: "2026-02-15",
@@ -264,8 +264,8 @@ export const bookings: Booking[] = [
   },
   {
     id: 5,
-    guestName: "Yonas Girma",
-    email: "yonas@email.com",
+    guestName: "Tola Girma",
+    email: "tola@email.com",
     roomId: 5,
     roomName: "Presidential Suite",
     checkIn: "2026-03-01",
