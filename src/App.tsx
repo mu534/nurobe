@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LandingPage } from "./app/pages/LandingPage";
 import { BookingPage } from "./app/pages/BookingPage";
 import { RoomDetailsPage } from "./app/pages/RoomDetails";
@@ -26,6 +26,8 @@ export default function App() {
         <Route path="/admin/rooms" element={<AdminRooms />} />
         <Route path="/admin/bookings" element={<AdminBookings />} />
         <Route path="/admin/payments" element={<AdminPayments />} />
+        {/* Catch all - redirect to home */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
