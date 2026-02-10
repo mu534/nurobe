@@ -5,6 +5,7 @@ import nurobe from "../../assets/images/nurobe.png";
 import { Search, MapPin, Users, Calendar } from "lucide-react";
 import { rooms } from "../data/hotelData";
 import { GuestReviews } from "../components/GuestReviews";
+import { HotelDescription } from "../components/HotelDescription";
 
 export function LandingPage() {
   const [checkIn, setCheckIn] = useState("");
@@ -121,6 +122,9 @@ export function LandingPage() {
             </div>
           </div>
         </form>
+      </section>
+      <section>
+        <HotelDescription />
       </section>
 
       {/* Featured Rooms */}
