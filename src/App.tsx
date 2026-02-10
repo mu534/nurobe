@@ -5,6 +5,10 @@ import { RoomDetailsPage } from "./app/pages/RoomDetails";
 import { RoomsPage } from "./app/pages/RoomsPage";
 import { ContactPage } from "./app/pages/ContactPage";
 import { LoginPage } from "./app/pages/LoginPage";
+import { AdminBookings } from "./app/pages/admin/AdminBookings";
+import { AdminDashboard } from "./app/pages/admin/AdminDashboard";
+import { AdminPayments } from "./app/pages/admin/AdminPayments";
+import { AdminRooms } from "./app/pages/admin/AdminRooms";
 
 export default function App() {
   return (
@@ -18,6 +22,10 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/contact" element={<ContactPage />} />
         {/* admin Routes */}
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/rooms" element={<AdminRooms />} />
+        <Route path="/admin/bookings" element={<AdminBookings />} />
+        <Route path="/admin/payments" element={<AdminPayments />} />
       </Routes>
     </BrowserRouter>
   );
