@@ -74,7 +74,7 @@ export function BookingPage() {
           </p>
           <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
             <div className="mb-2">
-              <span className="text-sm text-gray-600">Confirmation Number</span>
+              <span className="text-sm text-gray-600">Confirmation Code</span>
               <div className="text-lg">{confirmationNumber}</div>
             </div>
           </div>
@@ -95,20 +95,21 @@ export function BookingPage() {
               <span className="text-sm text-gray-600">Check-out</span>
               <div>{new Date(checkOut).toLocaleDateString()}</div>
             </div>
+
+            <Link
+              to="/"
+              className="block w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition mb-3"
+            >
+              Return to Home
+            </Link>
+            <Link
+              to="/rooms"
+              className="block w-full bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 transition"
+            >
+              Browse More Rooms
+            </Link>
           </div>
         </div>
-        <Link
-          to="/"
-          className="block w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition mb-3"
-        >
-          Return to Home
-        </Link>
-        <Link
-          to="/rooms"
-          className="block w-full bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 transition"
-        >
-          Browse More Rooms
-        </Link>
       </div>
     );
   }

@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import nurobe from "../../assets/images/nurobe.png";
-
+import Attractions from "../components/Attractions";
 import { Search, MapPin, Users, Calendar } from "lucide-react";
 import { rooms } from "../data/hotelData";
 import { GuestReviews } from "../components/GuestReviews";
 import { HotelDescription } from "../components/HotelDescription";
 import NavBar from "../components/NavBar";
+import Dining from "../components/Dining";
+import Services from "../components/Services";
 
 export function LandingPage() {
   const [checkIn, setCheckIn] = useState("");
@@ -174,8 +176,18 @@ export function LandingPage() {
           </Link>
         </div>
       </section>
-
-      <GuestReviews />
+      <div>
+        <Attractions />
+      </div>
+      <div>
+        <Services />
+      </div>
+      <div>
+        <Dining />
+      </div>
+      <div>
+        <GuestReviews />
+      </div>
 
       {/* About Section */}
       <section className="bg-gray-50 py-20">

@@ -1,15 +1,21 @@
 import { Link } from "react-router-dom";
-import { Menu, X, Phone, Mail } from "lucide-react";
+import { Menu, X, Phone, Mail, ChevronDown } from "lucide-react";
 import { useState } from "react";
 
 const NavBar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  const navLinks = [
+  const mainLinks = [
     { to: "/", label: "Home" },
     { to: "/rooms", label: "Rooms" },
-    { to: "/amenities", label: "Amenities" },
-    { to: "/contact", label: "Contact" },
+  ];
+
+  const exploreLinks = [
+    { to: "/location", label: "Location" },
+    { to: "/attractions", label: "Attractions" },
+    { to: "/services", label: "Services" },
+    { to: "/dining", label: "Dining" },
   ];
 
   return (
@@ -50,7 +56,7 @@ const NavBar = () => {
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-8">
-              {navLinks.map((link) => (
+              {mainLinks.map((link) => (
                 <Link
                   key={link.to}
                   to={link.to}
@@ -60,6 +66,48 @@ const NavBar = () => {
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-400 group-hover:w-full transition-all duration-300"></span>
                 </Link>
               ))}
+
+              {/* Explore Dropdown */}
+              <div
+                className="relative"
+                onMouseEnter={() => setIsDropdownOpen(true)}
+                onMouseLeave={() => setIsDropdownOpen(false)}
+              >
+                <button className="text-white font-medium hover:text-blue-400 transition-colors relative group flex items-center gap-1">
+                  Explore
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`}
+                  />
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-400 group-hover:w-full transition-all duration-300"></span>
+                </button>
+
+                {/* Dropdown Menu */}
+                <div
+                  className={`absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-xl overflow-hidden transition-all duration-300 ${
+                    isDropdownOpen
+                      ? "opacity-100 visible translate-y-0"
+                      : "opacity-0 invisible -translate-y-2"
+                  }`}
+                >
+                  {exploreLinks.map((link) => (
+                    <Link
+                      key={link.to}
+                      to={link.to}
+                      className="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              <Link
+                to="/contact"
+                className="text-white font-medium hover:text-blue-400 transition-colors relative group"
+              >
+                Contact
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-400 group-hover:w-full transition-all duration-300"></span>
+              </Link>
             </nav>
 
             {/* CTA Buttons */}
@@ -72,7 +120,7 @@ const NavBar = () => {
               </Link>
               <Link
                 to="/rooms"
-                className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-2.5 rounded-full font-semibold hover:from-green-600 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-2.5 rounded-full font-semibold hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl hover:scale-105"
               >
                 Book Now
               </Link>
@@ -96,11 +144,11 @@ const NavBar = () => {
         {/* Mobile Navigation */}
         <div
           className={`md:hidden overflow-hidden transition-all duration-300 ${
-            isMenuOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+            isMenuOpen ? "max-h-[600px] opacity-100" : "max-h-0 opacity-0"
           }`}
         >
           <nav className="container mx-auto px-4 pb-6 flex flex-col gap-4 bg-black/40 backdrop-blur-md">
-            {navLinks.map((link) => (
+            {mainLinks.map((link) => (
               <Link
                 key={link.to}
                 to={link.to}
@@ -110,6 +158,32 @@ const NavBar = () => {
                 {link.label}
               </Link>
             ))}
+
+            {/* Mobile Explore Section */}
+            <div className="border-b border-white/10">
+              <div className="text-white/60 text-sm font-semibold mb-2 px-2">
+                Explore
+              </div>
+              {exploreLinks.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={() => setIsMenuOpen(false)}
+                  className="text-white font-medium hover:text-blue-400 transition-colors py-2 pl-4 block"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+
+            <Link
+              to="/contact"
+              onClick={() => setIsMenuOpen(false)}
+              className="text-white font-medium hover:text-blue-400 transition-colors py-2 border-b border-white/10"
+            >
+              Contact
+            </Link>
+
             <Link
               to="/login"
               onClick={() => setIsMenuOpen(false)}
@@ -120,7 +194,7 @@ const NavBar = () => {
             <Link
               to="/rooms"
               onClick={() => setIsMenuOpen(false)}
-              className="bg-gradient-to-r from-blue-500 to-blue-500 text-white px-6 py-3 rounded-full font-semibold text-center hover:from-blue-600 hover:to-emerald-700 transition-all"
+              className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-full font-semibold text-center hover:from-blue-600 hover:to-blue-700 transition-all"
             >
               Book Now
             </Link>

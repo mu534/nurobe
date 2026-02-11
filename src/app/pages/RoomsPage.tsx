@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Filter, X } from "lucide-react";
 import { rooms } from "../data/hotelData";
+import NavBar from "../components/NavBar";
 
 export function RoomsPage() {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 400]);
@@ -24,32 +25,10 @@ export function RoomsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex justify-between items-center">
-            <Link to="/" className="text-2xl text-gray-900">
-              Nurobe Hotel
-            </Link>
-            <nav className="hidden md:flex gap-6">
-              <Link to="/" className="text-gray-600 hover:text-gray-900">
-                Home
-              </Link>
-              <Link to="/rooms" className="text-gray-900">
-                Rooms
-              </Link>
-              <Link to="/contact" className="text-gray-600 hover:text-gray-900">
-                Contact
-              </Link>
-              <Link to="/login" className="text-gray-600 hover:text-gray-900">
-                Login
-              </Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+      <NavBar />
 
       {/* Page Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-12">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-12 pt-32">
         <div className="container mx-auto px-4">
           <h1 className="text-3xl md:text-4xl mb-2">Our Rooms</h1>
           <p className="text-blue-100">Find your perfect accommodation</p>
