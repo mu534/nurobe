@@ -10,7 +10,9 @@ import {
   Users,
   Maximize,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { rooms } from "../data/hotelData";
+import NavBar from "../components/NavBar";
 
 export function RoomDetailsPage() {
   const { id } = useParams();
@@ -69,7 +71,7 @@ export function RoomDetailsPage() {
     );
   };
 
-  const amenityIcons: { [key: string]: any } = {
+  const amenityIcons: Record<string, LucideIcon> = {
     WiFi: Wifi,
     TV: Tv,
     "Air Conditioning": Wind,
@@ -79,27 +81,7 @@ export function RoomDetailsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex justify-between items-center">
-            <Link to="/" className="text-2xl text-gray-900">
-              Nurobe Hotel
-            </Link>
-            <nav className="hidden md:flex gap-6">
-              <Link to="/" className="text-gray-600 hover:text-gray-900">
-                Home
-              </Link>
-              <Link to="/rooms" className="text-gray-900">
-                Rooms
-              </Link>
-              <Link to="/contact" className="text-gray-600 hover:text-gray-900">
-                Contact
-              </Link>
-            </nav>
-          </div>
-        </div>
-      </header>
-
+      <NavBar />
       <div className="container mx-auto px-4 py-8">
         <Link
           to="/rooms"

@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { useSearchParams, Link, useNavigate } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { Check } from "lucide-react";
 import { rooms } from "../data/hotelData";
 
 export function BookingPage() {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   const roomId = parseInt(searchParams.get("roomId") || "0");
   const checkIn = searchParams.get("checkIn") || "";
@@ -13,6 +13,9 @@ export function BookingPage() {
   const guestsParam = searchParams.get("guests") || "2";
 
   const room = rooms.find((r) => r.id === roomId);
+  const [confirmationNumber] = useState(
+    () => `NRB-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+  );
 
   const [guestName, setGuestName] = useState("");
   const [email, setEmail] = useState("");
@@ -72,42 +75,40 @@ export function BookingPage() {
           <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
             <div className="mb-2">
               <span className="text-sm text-gray-600">Confirmation Number</span>
-              <div className="text-lg">
-                NRB-{Math.random().toString(36).substr(2, 9).toUpperCase()}
-              </div>
-            </div>
-            <div className="mb-2">
-              <span className="text-sm text-gray-600">Guest Name</span>
-              <div>{guestName}</div>
-            </div>
-            <div className="mb-2">
-              <span className="text-sm text-gray-600">Room</span>
-              <div>{room.name}</div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <span className="text-sm text-gray-600">Check-in</span>
-                <div>{new Date(checkIn).toLocaleDateString()}</div>
-              </div>
-              <div>
-                <span className="text-sm text-gray-600">Check-out</span>
-                <div>{new Date(checkOut).toLocaleDateString()}</div>
-              </div>
+              <div className="text-lg">{confirmationNumber}</div>
             </div>
           </div>
-          <Link
-            to="/"
-            className="block w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition mb-3"
-          >
-            Return to Home
-          </Link>
-          <Link
-            to="/rooms"
-            className="block w-full bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 transition"
-          >
-            Browse More Rooms
-          </Link>
+          <div className="mb-2">
+            <span className="text-sm text-gray-600">Guest Name</span>
+            <div>{guestName}</div>
+          </div>
+          <div className="mb-2">
+            <span className="text-sm text-gray-600">Room</span>
+            <div>{room.name}</div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <span className="text-sm text-gray-600">Check-in</span>
+              <div>{new Date(checkIn).toLocaleDateString()}</div>
+            </div>
+            <div>
+              <span className="text-sm text-gray-600">Check-out</span>
+              <div>{new Date(checkOut).toLocaleDateString()}</div>
+            </div>
+          </div>
         </div>
+        <Link
+          to="/"
+          className="block w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition mb-3"
+        >
+          Return to Home
+        </Link>
+        <Link
+          to="/rooms"
+          className="block w-full bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 transition"
+        >
+          Browse More Rooms
+        </Link>
       </div>
     );
   }
