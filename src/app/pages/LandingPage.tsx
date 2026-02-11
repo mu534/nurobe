@@ -6,6 +6,7 @@ import { Search, MapPin, Users, Calendar } from "lucide-react";
 import { rooms } from "../data/hotelData";
 import { GuestReviews } from "../components/GuestReviews";
 import { HotelDescription } from "../components/HotelDescription";
+import NavBar from "../components/NavBar";
 
 export function LandingPage() {
   const [checkIn, setCheckIn] = useState("");
@@ -23,24 +24,7 @@ export function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/50 to-transparent">
-        <div className="container mx-auto px-4 py-6 flex justify-between items-center">
-          <Link to="/" className="text-white text-2xl">
-            Nurobe Hotel
-          </Link>
-          <nav className="hidden md:flex gap-6 text-white">
-            <Link to="/rooms" className="hover:text-gray-200">
-              Rooms
-            </Link>
-            <Link to="/contact" className="hover:text-gray-200">
-              Contact
-            </Link>
-            <Link to="/login" className="hover:text-gray-200">
-              Login
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <NavBar />
 
       {/* Hero Section */}
       <section className="relative h-[70vh] md:h-[85vh] overflow-hidden">

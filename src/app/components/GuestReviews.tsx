@@ -1,13 +1,15 @@
 // src/app/components/GuestReviews.tsx
 import React from "react";
-import { Star } from "lucide-react";
+import { Star, Quote } from "lucide-react";
 
 interface Review {
   id: number;
   name: string;
-  avatar: string; // image path or URL
-  rating: number; // out of 5
+  avatar: string;
+  location?: string;
+  rating: number;
   comment: string;
+  date?: string;
 }
 
 const reviews: Review[] = [
@@ -15,65 +17,122 @@ const reviews: Review[] = [
     id: 1,
     name: "Amanuel T.",
     avatar: "/images/guest1.jpg",
+    location: "Addis Ababa, Ethiopia",
     rating: 5,
     comment:
       "Amazing experience! The hotel was clean, staff were super friendly, and the view was breathtaking.",
+    date: "January 2026",
   },
   {
     id: 2,
     name: "Sara K.",
     avatar: "/images/guest2.jpg",
+    location: "Nairobi, Kenya",
     rating: 4,
     comment:
       "Loved the hospitality. Rooms were spacious and comfortable. Definitely coming back!",
+    date: "December 2025",
   },
   {
     id: 3,
     name: "Michael D.",
     avatar: "/images/guest3.jpg",
+    location: "London, UK",
     rating: 5,
     comment:
       "Perfect location and service. Everything exceeded my expectations. Highly recommend!",
+    date: "November 2025",
   },
 ];
 
 export const GuestReviews: React.FC = () => {
   return (
-    <section className="py-16 bg-gray-50">
-      <div className="max-w-6xl mx-auto px-6 text-center">
-        <h2 className="text-3xl font-bold text-gray-900 mb-8">
-          What Our Guests Say
-        </h2>
-        <div className="grid md:grid-cols-3 gap-8">
-          {reviews.map((review) => (
+    <section className="py-24 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute top-0 left-0 w-96 h-96 bg-green-100 rounded-full blur-3xl opacity-30 -translate-x-1/2 -translate-y-1/2"></div>
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-emerald-100 rounded-full blur-3xl opacity-30 translate-x-1/2 translate-y-1/2"></div>
+
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+        {/* Header */}
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-full text-sm font-semibold mb-4">
+            <Star className="w-4 h-4 fill-green-600 text-green-600" />
+            Trusted by Travelers
+          </div>
+          <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
+            What Our Guests Say
+          </h2>
+          <p className="text-lg text-gray-600">
+            Don't just take our word for it — hear from travelers who've
+            experienced Nurobe Hotel firsthand.
+          </p>
+        </div>
+
+        {/* Reviews Grid */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {reviews.map((review, index) => (
             <div
               key={review.id}
-              className="bg-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300"
+              className="group bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl hover:border-gray-200 transition-all duration-300 hover:-translate-y-1"
+              style={{ animationDelay: `${index * 100}ms` }}
             >
-              <div className="flex items-center justify-center mb-4">
-                <img
-                  src={review.avatar}
-                  alt={review.name}
-                  className="w-16 h-16 rounded-full object-cover border-2 border-green-500"
-                />
+              {/* Quote icon */}
+              <div className="mb-6">
+                <Quote className="w-10 h-10 text-green-600 opacity-20 group-hover:opacity-40 transition-opacity" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-800">
-                {review.name}
-              </h3>
-              <div className="flex justify-center my-2">
+
+              {/* Rating */}
+              <div className="flex gap-1 mb-4">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Star
                     key={i}
-                    size={18}
-                    className={`${
-                      i < review.rating ? "text-yellow-400" : "text-gray-300"
+                    className={`w-5 h-5 transition-colors ${
+                      i < review.rating
+                        ? "text-yellow-400 fill-yellow-400"
+                        : "text-gray-200 fill-gray-200"
                     }`}
                   />
                 ))}
               </div>
-              <p className="text-gray-600 mt-2">{review.comment}</p>
+
+              {/* Comment */}
+              <p className="text-gray-700 leading-relaxed mb-6">
+                "{review.comment}"
+              </p>
+
+              {/* Author */}
+              <div className="flex items-center gap-4 pt-6 border-t border-gray-100">
+                <img
+                  src={review.avatar}
+                  alt={review.name}
+                  className="w-14 h-14 rounded-full object-cover ring-2 ring-green-100 group-hover:ring-green-200 transition-all"
+                />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900">{review.name}</h3>
+                  {review.location && (
+                    <p className="text-sm text-gray-500">{review.location}</p>
+                  )}
+                  {review.date && (
+                    <p className="text-xs text-gray-400 mt-1">{review.date}</p>
+                  )}
+                </div>
+              </div>
             </div>
           ))}
+        </div>
+
+        {/* Overall Rating Summary */}
+        <div className="mt-16 text-center">
+          <div className="inline-flex flex-col items-center gap-2 bg-white px-8 py-6 rounded-2xl shadow-md border border-gray-100">
+            <div className="flex items-center gap-2">
+              <Star className="w-6 h-6 text-yellow-400 fill-yellow-400" />
+              <span className="text-4xl font-bold text-gray-900">4.9</span>
+              <span className="text-gray-500">/5</span>
+            </div>
+            <p className="text-sm text-gray-600">
+              Based on 500+ verified guest reviews
+            </p>
+          </div>
         </div>
       </div>
     </section>
