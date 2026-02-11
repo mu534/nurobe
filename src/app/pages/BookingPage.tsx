@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { Check } from "lucide-react";
 import { rooms } from "../data/hotelData";
