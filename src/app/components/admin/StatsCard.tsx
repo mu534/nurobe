@@ -7,6 +7,7 @@ interface StatsCardProps {
   badge?: string | number;
   badgeColor?: string;
   bgColor?: string;
+  color?: string;
 }
 
 export function StatsCard({

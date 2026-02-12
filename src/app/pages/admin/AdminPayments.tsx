@@ -35,7 +35,12 @@ export function AdminPayments() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar active="payments" />
+      <Sidebar
+        active="payments"
+        onLogout={function (): void {
+          throw new Error("Function not implemented.");
+        }}
+      />
       <div className="flex-1 overflow-auto">
         <Header
           title="Payments & Reports"
