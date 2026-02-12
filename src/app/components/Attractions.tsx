@@ -6,6 +6,7 @@ import sanetti from "../../assets/images/sanetti.png";
 import harena from "../../assets/images/harena.png";
 import sofumar from "../../assets/images/sofumar.png";
 import balemountain from "../../assets/images/balemountain.png";
+import { Link } from "react-router-dom";
 
 const AttractionsSection = () => {
   const [openId, setOpenId] = useState<number | null>(null);
@@ -104,28 +105,28 @@ const AttractionsSection = () => {
         {/* CTA Section */}
         <div className="text-center bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl p-8 lg:p-12 text-white">
           <h3 className="text-2xl lg:text-3xl font-bold mb-4">
-            Ready to Explore?
+            Ready to Explore Bale?
           </h3>
 
           <p className="text-blue-100 mb-6 max-w-2xl mx-auto">
-            Our concierge team can help arrange tours and transportation to all
-            nearby attractions
+            Let us organize guided tours, transportation, and exclusive
+            adventure packages tailored for your stay at Nurobe Hotel.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a
-              href="/contact"
+            <Link
+              to="/contact"
               className="inline-block bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
             >
-              Contact Concierge
-            </a>
+              Plan My Tour
+            </Link>
 
-            <a
-              href="/attractions"
+            <Link
+              to="/attractions"
               className="inline-block bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-800 transition-colors border-2 border-white/20"
             >
-              View All Attractions
-            </a>
+              Explore All Destinations
+            </Link>
           </div>
         </div>
       </div>
