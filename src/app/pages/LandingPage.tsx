@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import nurobe from "../../assets/images/nurobe.png";
+import nurobe3 from "../../assets/images/nurobe3.png";
 import Attractions from "../components/Attractions";
 import { Search, MapPin, Users, Calendar } from "lucide-react";
 import { rooms } from "../data/hotelData";
@@ -31,7 +31,7 @@ export function LandingPage() {
       {/* Hero Section */}
       <section className="relative h-[70vh] md:h-[85vh] overflow-hidden">
         <img
-          src={nurobe}
+          src={nurobe3}
           alt="Nurobe Hotel"
           className="w-full h-full object-cover"
         />

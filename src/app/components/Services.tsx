@@ -245,7 +245,7 @@ export const ServicesSection = () => {
             </p>
           </div>
 
-          <div className="bg-gradient-to-br from-green-600 to-emerald-800 rounded-2xl p-8 text-white">
+          <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-8 text-white">
             <Clock className="w-12 h-12 mb-4 opacity-80" />
             <h3 className="text-2xl font-bold mb-2">24/7 Guest Support</h3>
             <p className="text-green-100">

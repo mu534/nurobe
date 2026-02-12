@@ -2,6 +2,10 @@
 import React from "react";
 import { Star, Quote } from "lucide-react";
 
+import tola from "../../assets/images/tola.png";
+import mechael from "../../assets/images/mechael.png";
+import john from "../../assets/images/john.png";
+
 interface Review {
   id: number;
   name: string;
@@ -15,8 +19,8 @@ interface Review {
 const reviews: Review[] = [
   {
     id: 1,
-    name: "Amanuel T.",
-    avatar: "/images/guest1.jpg",
+    name: "Tola Girma.",
+    avatar: tola,
     location: "Addis Ababa, Ethiopia",
     rating: 5,
     comment:
@@ -25,9 +29,9 @@ const reviews: Review[] = [
   },
   {
     id: 2,
-    name: "Sara K.",
-    avatar: "/images/guest2.jpg",
-    location: "Nairobi, Kenya",
+    name: "John A.",
+    avatar: john,
+    location: "Cape Town, South Africa, ",
     rating: 4,
     comment:
       "Loved the hospitality. Rooms were spacious and comfortable. Definitely coming back!",
@@ -36,7 +40,7 @@ const reviews: Review[] = [
   {
     id: 3,
     name: "Michael D.",
-    avatar: "/images/guest3.jpg",
+    avatar: mechael,
     location: "London, UK",
     rating: 5,
     comment:
