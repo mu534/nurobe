@@ -1,4 +1,4 @@
-import { Sidebar } from "../../components/admin/sidebar";
+import { Sidebar } from "../../components/admin/Sidebar";
 import { StatsCard } from "../../components/admin/StatsCard";
 import { BookingsChart } from "../../components/admin/BookingsChart";
 import { RevenueChart } from "../../components/admin/RevenueChart";
