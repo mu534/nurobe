@@ -4,11 +4,14 @@ import "@radix-ui/themes/styles.css";
 import ErrorBoundary from "../ErrorBoundary.tsx";
 import "./index.css";
 import App from "./App.tsx";
+import { AuthProvider } from "./context/AuthContext.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
+    <AuthProvider>
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
+    </AuthProvider>
   </StrictMode>,
 );
