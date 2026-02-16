@@ -1,6 +1,6 @@
 import type { Response } from "express";
-import { prisma } from "../config/prisma.js";
-import type { AuthRequest } from "../middleware/auth.middleware.js";
+import { prisma } from "../../lib/prisma.ts";
+import type { AuthRequest } from "../middleware/auth.middleware.ts";
 
 export const createPayment = async (req: AuthRequest, res: Response) => {
   const { bookingId, amount, method } = req.body;

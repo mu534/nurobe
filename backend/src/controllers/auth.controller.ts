@@ -1,10 +1,10 @@
 import type { Request, Response } from "express";
-import { prisma } from "../config/prisma.js";
+import { prisma } from "../../lib/prisma.ts";
 import {
   hashPassword,
   comparePassword,
   generateToken,
-} from "../utils/helpers.js";
+} from "../utils/helpers.ts";
 
 export const register = async (req: Request, res: Response) => {
   const { name, email, password } = req.body;

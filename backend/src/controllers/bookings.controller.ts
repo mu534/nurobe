@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { prisma } from "../config/prisma.js";
+import { prisma } from "../../lib/prisma.ts";
 
 // AuthRequest typed according to your User model
 export interface AuthRequest extends Request {

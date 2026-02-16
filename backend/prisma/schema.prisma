@@ -22,9 +22,9 @@ model Room {
   size      String
   bedType   String
   available Boolean   @default(true)
+  bookings  Booking[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  bookings  Booking[]
 }
 
 model User {
@@ -45,7 +45,7 @@ model Booking {
   roomId    Int
   checkIn   DateTime
   checkOut  DateTime
-  status    String   @default("pending") // pending, confirmed, cancelled
+  status    String   @default("pending")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   payment   Payment?
@@ -56,7 +56,7 @@ model Payment {
   booking   Booking  @relation(fields: [bookingId], references: [id])
   bookingId Int      @unique
   amount    Float
-  status    String   @default("pending") // pending, paid, failed
+  status    String   @default("pending")
   method    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

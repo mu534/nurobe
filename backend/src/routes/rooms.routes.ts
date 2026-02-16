@@ -5,8 +5,8 @@ import {
   createRoom,
   updateRoom,
   deleteRoom,
-} from "../controllers/rooms.controller.js";
-import { authMiddleware } from "../middleware/auth.middleware.js";
+} from "../controllers/rooms.controller.ts";
+import { authMiddleware } from "../middleware/auth.middleware.ts";
 
 const router = Router();
 

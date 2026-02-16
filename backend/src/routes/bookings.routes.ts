@@ -2,8 +2,8 @@ import { Router } from "express";
 import {
   getBookings,
   createBooking,
-} from "../controllers/bookings.controller.js";
-import { authMiddleware } from "../middleware/auth.middleware.js";
+} from "../controllers/bookings.controller.ts";
+import { authMiddleware } from "../middleware/auth.middleware.ts";
 
 const router = Router();
 router.use(authMiddleware);

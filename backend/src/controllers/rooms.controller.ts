@@ -1,6 +1,5 @@
 import type { Request, Response } from "express";
-import { prisma } from "../config/prisma.js";
-
+import { prisma } from "../../lib/prisma.ts";
 export const getRooms = async (req: Request, res: Response) => {
   const rooms = await prisma.room.findMany();
   res.json(rooms);
