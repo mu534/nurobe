@@ -1,26 +1,91 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { Sidebar } from "../../components/admin/Sidebar";
 import { StatsCard } from "../../components/admin/StatsCard";
 import { RoomCard } from "../../components/admin/RoomCard";
-import { rooms as initialRooms } from "../../data/hotelData";
+import type { Room } from "../../../types/types";
+
+import {
+  getRooms,
+  createRoom,
+  updateRoom,
+  deleteRoom,
+} from "../../../api/rooms";
 
 export function AdminRooms() {
   const navigate = useNavigate();
-  const [rooms, setRooms] = useState(initialRooms);
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
 
-  const handleDelete = (id: number) => {
-    if (confirm("Are you sure you want to delete this room?")) {
-      setRooms(rooms.filter((r) => r.id !== id));
+  // Fetch rooms from backend
+  const fetchRooms = async () => {
+    try {
+      setLoading(true);
+      const data = await getRooms();
+      setRooms(data);
+    } catch (error) {
+      console.error("Failed to load rooms:", error);
+      alert("Failed to load rooms");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const toggleAvailability = (id: number) => {
-    setRooms(
-      rooms.map((r) => (r.id === id ? { ...r, available: !r.available } : r)),
-    );
+  useEffect(() => {
+    fetchRooms();
+  }, []);
+
+  // Delete room
+  const handleDelete = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this room?")) return;
+    try {
+      await deleteRoom(id);
+      setRooms(rooms.filter((r) => r.id !== id));
+    } catch (error) {
+      console.error("Failed to delete room:", error);
+      alert("Failed to delete room");
+    }
+  };
+
+  // Toggle availability
+  const toggleAvailability = async (id: number) => {
+    try {
+      const room = rooms.find((r) => r.id === id);
+      if (!room) return;
+
+      const updatedRoom = await updateRoom({
+        ...room,
+        available: !room.available,
+      });
+      setRooms(rooms.map((r) => (r.id === id ? updatedRoom : r)));
+    } catch (error) {
+      console.error("Failed to toggle availability:", error);
+      alert("Failed to update room availability");
+    }
+  };
+
+  const [newRoom, setNewRoom] = useState<Omit<Room, "id">>({
+    name: "",
+    type: "",
+    price: 0,
+    image: "",
+    available: true,
+    capacity: 1,
+    size: "",
+    bedType: "",
+  });
+
+  const handleAddRoom = async () => {
+    try {
+      const createdRoom = await createRoom(newRoom);
+      setRooms([...rooms, createdRoom]);
+      setShowAddModal(false);
+    } catch (error) {
+      console.error("Failed to create room:", error);
+      alert("Failed to create room");
+    }
   };
 
   return (
@@ -47,48 +112,55 @@ export function AdminRooms() {
         </header>
 
         <div className="p-8">
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <StatsCard
-              value={rooms.length}
-              label="Total Rooms"
-              color="text-blue-600"
-              icon={undefined}
-            />
-            <StatsCard
-              value={rooms.filter((r) => r.available).length}
-              label="Available"
-              color="text-green-600"
-              icon={undefined}
-            />
-            <StatsCard
-              value={rooms.filter((r) => !r.available).length}
-              label="Booked"
-              color="text-red-600"
-              icon={undefined}
-            />
-            <StatsCard
-              value={`${Math.round(
-                (rooms.filter((r) => !r.available).length / rooms.length) * 100,
-              )}%`}
-              label="Occupancy Rate"
-              color="text-purple-600"
-              icon={undefined}
-            />
-          </div>
+          {loading ? (
+            <p>Loading rooms...</p>
+          ) : (
+            <>
+              {/* Stats */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <StatsCard
+                  value={rooms.length}
+                  label="Total Rooms"
+                  color="text-blue-600"
+                  icon={undefined}
+                />
+                <StatsCard
+                  value={rooms.filter((r) => r.available).length}
+                  label="Available"
+                  color="text-green-600"
+                  icon={undefined}
+                />
+                <StatsCard
+                  value={rooms.filter((r) => !r.available).length}
+                  label="Booked"
+                  color="text-red-600"
+                  icon={undefined}
+                />
+                <StatsCard
+                  value={`${Math.round(
+                    (rooms.filter((r) => !r.available).length / rooms.length) *
+                      100,
+                  )}%`}
+                  label="Occupancy Rate"
+                  color="text-purple-600"
+                  icon={undefined}
+                />
+              </div>
 
-          {/* Rooms Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {rooms.map((room) => (
-              <RoomCard
-                key={room.id}
-                room={room}
-                onToggleAvailability={toggleAvailability}
-                onDelete={handleDelete}
-                onEdit={(id) => alert("Edit modal for room " + id)}
-              />
-            ))}
-          </div>
+              {/* Rooms Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {rooms.map((room) => (
+                  <RoomCard
+                    key={room.id}
+                    room={room}
+                    onToggleAvailability={toggleAvailability}
+                    onDelete={handleDelete}
+                    onEdit={(id) => alert("Edit modal for room " + id)}
+                  />
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -100,12 +172,20 @@ export function AdminRooms() {
             <p className="text-gray-600 mb-4">
               This would open a form to add a new room with all details.
             </p>
-            <button
-              onClick={() => setShowAddModal(false)}
-              className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
-            >
-              Close
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={handleAddRoom}
+                className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
+              >
+                Add Room
+              </button>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="flex-1 bg-gray-300 text-gray-900 py-2 rounded-lg hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
