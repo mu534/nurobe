@@ -1,8 +1,18 @@
-import axios from "axios";
+import axios, { AxiosHeaders } from "axios";
 
 export const api = axios.create({
   baseURL: "http://localhost:5000/api",
   headers: {
     "Content-Type": "application/json",
   },
+});
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token && config.headers) {
+    // Ensure headers is AxiosHeaders
+    config.headers = AxiosHeaders.from(config.headers);
+    config.headers.set("Authorization", `Bearer ${token}`);
+  }
+  return config;
 });

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, User, Phone } from "lucide-react";
-
+import { api } from "../../api/index";
+import { AxiosError } from "axios";
 export function LoginPage() {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
@@ -10,14 +11,48 @@ export function LoginPage() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Demo login - redirect to admin if email contains 'admin'
-    if (email.includes("admin")) {
-      navigate("/admin");
-    } else {
-      navigate("/");
+    try {
+      if (isLogin) {
+        const res = await api.post("/auth/login", { email, password });
+        const token = res.data.token;
+
+        localStorage.setItem("token", token);
+
+        // Redirect based on user role
+        if (res.data.user.role === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/");
+        }
+      } else {
+        const res = await api.post("/auth/register", {
+          name,
+          email,
+          phone,
+          password,
+        });
+        const token = res.data.token;
+        localStorage.setItem("token", token);
+        navigate("/admin");
+      }
+    } catch (err) {
+      if (err instanceof AxiosError) {
+        // Axios error with response from backend
+        const message = err.response?.data?.message ?? err.message;
+        console.error("Login failed:", message);
+        alert("Login failed: " + message);
+      } else if (err instanceof Error) {
+        // Generic JS error
+        console.error("Login failed:", err.message);
+        alert("Login failed: " + err.message);
+      } else {
+        // Unknown error
+        console.error("Login failed: Unknown error");
+        alert("Login failed: Unknown error");
+      }
     }
   };
 

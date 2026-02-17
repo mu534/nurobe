@@ -5,7 +5,7 @@ export interface Room {
   price: number;
   image: string;
   available: boolean;
-  capacity: number;
+  maxGuests: number;
   size: string;
   bedType: string;
 }

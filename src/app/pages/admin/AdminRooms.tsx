@@ -72,7 +72,7 @@ export function AdminRooms() {
     price: 0,
     image: "",
     available: true,
-    capacity: 1,
+    maxGuests: 1,
     size: "",
     bedType: "",
   });
@@ -167,21 +167,90 @@ export function AdminRooms() {
       {/* Add Room Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h3 className="text-xl mb-4">Add New Room</h3>
-            <p className="text-gray-600 mb-4">
-              This would open a form to add a new room with all details.
-            </p>
+          <div className="bg-white rounded-lg max-w-md w-full p-6 space-y-4">
+            <h3 className="text-xl font-semibold">Add New Room</h3>
+
+            {/* Room Name */}
+            <input
+              type="text"
+              placeholder="Room Name"
+              value={newRoom.name}
+              onChange={(e) => setNewRoom({ ...newRoom, name: e.target.value })}
+              className="w-full border p-2 rounded"
+            />
+
+            {/* Type */}
+            <input
+              type="text"
+              placeholder="Room Type (e.g., Deluxe)"
+              value={newRoom.type}
+              onChange={(e) => setNewRoom({ ...newRoom, type: e.target.value })}
+              className="w-full border p-2 rounded"
+            />
+
+            {/* Capacity */}
+            <input
+              type="number"
+              placeholder="Capacity"
+              value={newRoom.maxGuests}
+              onChange={(e) =>
+                setNewRoom({ ...newRoom, maxGuests: Number(e.target.value) })
+              }
+              className="w-full border p-2 rounded"
+            />
+
+            {/* Price */}
+            <input
+              type="number"
+              placeholder="Price"
+              value={newRoom.price}
+              onChange={(e) =>
+                setNewRoom({ ...newRoom, price: Number(e.target.value) })
+              }
+              className="w-full border p-2 rounded"
+            />
+
+            {/* Size */}
+            <input
+              type="text"
+              placeholder="Size (e.g., 25 m²)"
+              value={newRoom.size}
+              onChange={(e) => setNewRoom({ ...newRoom, size: e.target.value })}
+              className="w-full border p-2 rounded"
+            />
+
+            {/* Bed Type */}
+            <input
+              type="text"
+              placeholder="Bed Type (e.g., Queen)"
+              value={newRoom.bedType}
+              onChange={(e) =>
+                setNewRoom({ ...newRoom, bedType: e.target.value })
+              }
+              className="w-full border p-2 rounded"
+            />
+
+            {/* Image URL */}
+            <input
+              type="text"
+              placeholder="Image URL"
+              value={newRoom.image}
+              onChange={(e) =>
+                setNewRoom({ ...newRoom, image: e.target.value })
+              }
+              className="w-full border p-2 rounded"
+            />
+
             <div className="flex gap-2">
               <button
                 onClick={handleAddRoom}
-                className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
+                className="flex-1 bg-green-600 text-white py-2 rounded hover:bg-green-700"
               >
                 Add Room
               </button>
               <button
                 onClick={() => setShowAddModal(false)}
-                className="flex-1 bg-gray-300 text-gray-900 py-2 rounded-lg hover:bg-gray-400"
+                className="flex-1 bg-gray-300 text-gray-900 py-2 rounded hover:bg-gray-400"
               >
                 Cancel
               </button>
