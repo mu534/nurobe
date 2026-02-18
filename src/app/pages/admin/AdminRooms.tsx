@@ -14,15 +14,20 @@ import {
   deleteRoom,
 } from "../../../api/rooms";
 
+type RoomPayload = Omit<Room, "id" | "image"> & {
+  imageFile?: File | null;
+  imageUrl?: string;
+};
+
 export function AdminRooms() {
   const navigate = useNavigate();
+
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
 
-  // Fetch rooms
   const fetchRooms = async () => {
     try {
       setLoading(true);
@@ -40,7 +45,6 @@ export function AdminRooms() {
     fetchRooms();
   }, []);
 
-  // Delete
   const handleDelete = async (id: number) => {
     if (!confirm("Are you sure you want to delete this room?")) return;
 
@@ -53,16 +57,19 @@ export function AdminRooms() {
     }
   };
 
-  // Toggle availability
   const toggleAvailability = async (id: number) => {
     try {
       const room = rooms.find((r) => r.id === id);
       if (!room) return;
 
-      const updatedRoom = await updateRoom({
-        ...room,
-        available: !room.available,
-      });
+      const updatedRoom = await updateRoom(
+        id,
+        {
+          ...room,
+          available: !room.available,
+        },
+        () => {},
+      );
 
       setRooms((prev) => prev.map((r) => (r.id === id ? updatedRoom : r)));
     } catch (error) {
@@ -71,10 +78,15 @@ export function AdminRooms() {
     }
   };
 
-  // Add room
-  const handleAddRoom = async (data: Omit<Room, "id">) => {
+  // =========================
+  // Add Room
+  // =========================
+  const handleAddRoom = async (
+    data: RoomPayload,
+    onProgress: (progress: number) => void,
+  ) => {
     try {
-      const createdRoom = await createRoom(data);
+      const createdRoom = await createRoom(data, onProgress);
       setRooms((prev) => [...prev, createdRoom]);
       setShowAddModal(false);
     } catch (error) {
@@ -83,15 +95,14 @@ export function AdminRooms() {
     }
   };
 
-  // Update room
-  const handleUpdateRoom = async (data: Omit<Room, "id">) => {
+  const handleUpdateRoom = async (
+    data: RoomPayload,
+    onProgress: (progress: number) => void,
+  ) => {
     if (!editingRoom) return;
 
     try {
-      const updatedRoom = await updateRoom({
-        ...editingRoom,
-        ...data,
-      });
+      const updatedRoom = await updateRoom(editingRoom.id, data, onProgress);
 
       setRooms((prev) =>
         prev.map((r) => (r.id === editingRoom.id ? updatedRoom : r)),
@@ -133,7 +144,7 @@ export function AdminRooms() {
             <p>Loading rooms...</p>
           ) : (
             <>
-              {/* Stats */}
+              {/* ================= Stats ================= */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                 <StatsCard
                   value={rooms.length}
@@ -169,7 +180,7 @@ export function AdminRooms() {
                 />
               </div>
 
-              {/* Rooms Grid */}
+              {/* ================= Rooms Grid ================= */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {rooms.map((room) => (
                   <RoomCard
@@ -179,7 +190,9 @@ export function AdminRooms() {
                     onDelete={handleDelete}
                     onEdit={(id) => {
                       const roomToEdit = rooms.find((r) => r.id === id);
-                      if (roomToEdit) setEditingRoom(roomToEdit);
+                      if (roomToEdit) {
+                        setEditingRoom(roomToEdit);
+                      }
                     }}
                   />
                 ))}
@@ -189,17 +202,18 @@ export function AdminRooms() {
         </div>
       </div>
 
-      {/* Add Room Modal */}
+      {/* ================= Edit Modal ================= */}
       <RoomFormModal
-        key={editingRoom?.id ?? "add"}
+        key={editingRoom?.id ?? "edit"}
         isOpen={!!editingRoom}
         onClose={() => setEditingRoom(null)}
         onSubmit={handleUpdateRoom}
         initialData={editingRoom ?? undefined}
       />
 
+      {/* ================= Add Modal ================= */}
       <RoomFormModal
-        key="add-room"
+        key="add"
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
         onSubmit={handleAddRoom}
