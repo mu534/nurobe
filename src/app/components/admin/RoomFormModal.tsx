@@ -157,11 +157,13 @@ export function RoomFormModal({
         <input type="file" accept="image/*" onChange={handleFileChange} />
 
         {preview && (
-          <img
-            src={preview}
-            alt="Preview"
-            className="w-full h-40 object-cover rounded"
-          />
+          <div className="w-full max-h-80 bg-gray-100 rounded overflow-auto flex items-center justify-center">
+            <img
+              src={preview}
+              alt="Preview"
+              className="max-w-full max-h-full object-contain"
+            />
+          </div>
         )}
 
         {/* Upload Progress Bar */}
