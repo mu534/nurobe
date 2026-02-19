@@ -1,6 +1,16 @@
 import { useState } from "react";
 import type { Room } from "../../../types/types";
 
+import {
+  Upload,
+  Trash2,
+  ZoomIn,
+  ZoomOut,
+  RotateCw,
+  RotateCcw,
+  RefreshCw,
+} from "lucide-react";
+
 type RoomPayload = Omit<Room, "id" | "image"> & {
   imageFile?: File | null;
   imageUrl?: string;
@@ -37,6 +47,8 @@ export function RoomFormModal({
   const [preview, setPreview] = useState(initialData?.image ?? "");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
+  const [zoom, setZoom] = useState(1);
+  const [rotation, setRotation] = useState(0);
 
   if (!isOpen) return null;
 
@@ -56,6 +68,9 @@ export function RoomFormModal({
     setImageFile(file);
     setImageUrl("");
     setPreview(URL.createObjectURL(file));
+
+    setZoom(1);
+    setRotation(0);
   };
 
   const handleSubmit = async () => {
@@ -84,8 +99,8 @@ export function RoomFormModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-md w-full p-6 space-y-4">
+    <div className="fixed inset-0 bg-black/50 flex items-start justify-center p-4 z-50 overflow-y-auto">
+      <div className="bg-white rounded-lg w-full max-w-4xl p-6 space-y-4 my-10">
         <h3 className="text-xl font-semibold">
           {initialData ? "Edit Room" : "Add Room"}
         </h3>
@@ -148,21 +163,101 @@ export function RoomFormModal({
             setImageUrl(e.target.value);
             setImageFile(null);
             setPreview(e.target.value);
+
+            setZoom(1);
+            setRotation(0);
           }}
           className="w-full border p-2 rounded"
         />
 
         <div className="text-center text-sm text-gray-500">OR</div>
 
-        <input type="file" accept="image/*" onChange={handleFileChange} />
+        <label className="flex items-center gap-2 cursor-pointer bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-fit">
+          <Upload size={16} />
+          Choose Image
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            hidden
+          />
+        </label>
+
+        {/* ================= IMAGE PREVIEW PANEL ================= */}
 
         {preview && (
-          <div className="w-full max-h-80 bg-gray-100 rounded overflow-auto flex items-center justify-center">
-            <img
-              src={preview}
-              alt="Preview"
-              className="max-w-full max-h-full object-contain"
-            />
+          <div className="border rounded-lg p-4 bg-gray-50 space-y-3">
+            {/* Controls */}
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setZoom((z) => Math.min(z + 0.2, 3))}
+                className="flex items-center gap-1 px-3 py-1 bg-white border rounded hover:bg-gray-100"
+              >
+                <ZoomIn size={16} /> Zoom In
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setZoom((z) => Math.max(z - 0.2, 0.5))}
+                className="flex items-center gap-1 px-3 py-1 bg-white border rounded hover:bg-gray-100"
+              >
+                <ZoomOut size={16} /> Zoom Out
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setRotation((r) => r + 90)}
+                className="flex items-center gap-1 px-3 py-1 bg-white border rounded hover:bg-gray-100"
+              >
+                <RotateCw size={16} /> Rotate Right
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setRotation((r) => r - 90)}
+                className="flex items-center gap-1 px-3 py-1 bg-white border rounded hover:bg-gray-100"
+              >
+                <RotateCcw size={16} /> Rotate Left
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setZoom(1);
+                  setRotation(0);
+                }}
+                className="flex items-center gap-1 px-3 py-1 bg-white border rounded hover:bg-gray-100"
+              >
+                <RefreshCw size={16} /> Reset
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setPreview("");
+                  setImageFile(null);
+                  setImageUrl("");
+                }}
+                className="flex items-center gap-1 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+              >
+                <Trash2 size={16} /> Remove
+              </button>
+            </div>
+
+            {/* Image viewer */}
+            <div className="w-full h-[400px] overflow-auto bg-black rounded flex items-center justify-center">
+              <img
+                src={preview}
+                alt="Preview"
+                className="transition-transform duration-200"
+                style={{
+                  transform: `scale(${zoom}) rotate(${rotation}deg)`,
+                  maxWidth: "100%",
+                  maxHeight: "100%",
+                }}
+              />
+            </div>
           </div>
         )}
 
