@@ -1,6 +1,5 @@
 import { useState } from "react";
-import type { Room } from "../../../types/types";
-
+import type { Room, RoomPayload } from "../../../types/types";
 import {
   Upload,
   Trash2,
@@ -11,9 +10,22 @@ import {
   RefreshCw,
 } from "lucide-react";
 
-type RoomPayload = Omit<Room, "id" | "image"> & {
-  imageFile?: File | null;
-  imageUrl?: string;
+// ================== Strict typing for form fields ==================
+type FormFields = "name" | "type" | "maxGuests" | "price" | "size" | "bedType";
+const fields: FormFields[] = [
+  "name",
+  "type",
+  "maxGuests",
+  "price",
+  "size",
+  "bedType",
+];
+
+type EditableImage = {
+  file: File;
+  preview: string;
+  zoom: number;
+  rotation: number;
 };
 
 interface Props {
@@ -42,17 +54,13 @@ export function RoomFormModal({
     bedType: initialData?.bedType ?? "",
   });
 
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imageUrl, setImageUrl] = useState(initialData?.image ?? "");
-  const [preview, setPreview] = useState(initialData?.image ?? "");
+  const [images, setImages] = useState<EditableImage[]>([]);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
 
-  const [zoom, setZoom] = useState(1);
-  const [rotation, setRotation] = useState(0);
-
   if (!isOpen) return null;
 
+  // ================== Handlers ==================
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -62,88 +70,103 @@ export function RoomFormModal({
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files) return;
 
-    setImageFile(file);
-    setImageUrl("");
-    setPreview(URL.createObjectURL(file));
-    setZoom(1);
-    setRotation(0);
+    const selectedFiles = Array.from(files);
+    if (selectedFiles.length + images.length > 2) {
+      alert("You must upload exactly 2 images.");
+      return;
+    }
+
+    const newImages: EditableImage[] = selectedFiles.map((file) => ({
+      file,
+      preview: URL.createObjectURL(file),
+      zoom: 1,
+      rotation: 0,
+    }));
+
+    setImages((prev) => [...prev, ...newImages]);
   };
 
-  const applyTransformations = async () => {
-    if (!preview) return;
+  const updateImage = (index: number, updates: Partial<EditableImage>) => {
+    setImages((prev) =>
+      prev.map((img, i) => (i === index ? { ...img, ...updates } : img)),
+    );
+  };
 
-    try {
-      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-        const image = new Image();
-        image.crossOrigin = "anonymous";
-        image.onload = () => resolve(image);
-        image.onerror = reject;
-        image.src = preview;
-      });
+  const removeImage = (index: number) =>
+    setImages((prev) => prev.filter((_, i) => i !== index));
 
-      const canvas = document.createElement("canvas");
+  const applyTransformations = async (index: number) => {
+    const imageData = images[index];
+    if (!imageData) return;
 
-      // Calculate bounding box INCLUDING zoom
-      const rad = (rotation * Math.PI) / 180;
-      const sin = Math.abs(Math.sin(rad));
-      const cos = Math.abs(Math.cos(rad));
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = reject;
+      image.src = imageData.preview;
+    });
 
-      const scaledWidth = img.width * zoom;
-      const scaledHeight = img.height * zoom;
+    const canvas = document.createElement("canvas");
+    const rad = (imageData.rotation * Math.PI) / 180;
+    const sin = Math.abs(Math.sin(rad));
+    const cos = Math.abs(Math.cos(rad));
+    const scaledWidth = img.width * imageData.zoom;
+    const scaledHeight = img.height * imageData.zoom;
 
-      canvas.width = scaledWidth * cos + scaledHeight * sin;
-      canvas.height = scaledWidth * sin + scaledHeight * cos;
+    canvas.width = scaledWidth * cos + scaledHeight * sin;
+    canvas.height = scaledWidth * sin + scaledHeight * cos;
 
-      const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("Cannot get canvas context");
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-      // Center and apply transformations
-      ctx.translate(canvas.width / 2, canvas.height / 2);
-      ctx.rotate(rad);
-      ctx.scale(zoom, zoom);
-      ctx.drawImage(img, -img.width / 2, -img.height / 2);
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate(rad);
+    ctx.scale(imageData.zoom, imageData.zoom);
+    ctx.drawImage(img, -img.width / 2, -img.height / 2);
 
-      // Export as JPEG (good balance of quality/size)
-      const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, "image/jpeg", 0.92),
-      );
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/jpeg", 0.92),
+    );
+    if (!blob) return;
 
-      if (!blob) throw new Error("Canvas toBlob failed");
-
-      const newFile = new File([blob], `room-${Date.now()}.jpg`, {
-        type: "image/jpeg",
-      });
-
-      // Update state
-      setImageFile(newFile);
-      setImageUrl(""); // no longer using URL
-      setPreview(URL.createObjectURL(newFile));
-
-      // Reset controls since changes are now baked in
-      setZoom(1);
-      setRotation(0);
-
-      alert("Image edits applied successfully!");
-    } catch (err) {
-      console.error("Failed to apply image edits:", err);
-      alert("Could not apply image changes. Please try again.");
-    }
+    const newFile = new File([blob], `room-${Date.now()}.jpg`, {
+      type: "image/jpeg",
+    });
+    updateImage(index, {
+      file: newFile,
+      preview: URL.createObjectURL(newFile),
+      zoom: 1,
+      rotation: 0,
+    });
   };
 
   const handleSubmit = async () => {
+    if (images.length !== 2) {
+      alert("You must upload exactly 2 images.");
+      return;
+    }
+
     try {
       setUploading(true);
       setUploadProgress(0);
 
+      // Create FormData to send to backend
+      const formDataToSend = new FormData();
+      formDataToSend.append("name", formData.name);
+      formDataToSend.append("type", formData.type);
+      formDataToSend.append("price", formData.price.toString());
+      formDataToSend.append("maxGuests", formData.maxGuests.toString());
+      formDataToSend.append("size", formData.size);
+      formDataToSend.append("bedType", formData.bedType);
+      formDataToSend.append("available", String(formData.available));
+      images.forEach((img) => formDataToSend.append(`images`, img.file));
+
+      // Send to backend
       await onSubmit(
-        {
-          ...formData,
-          imageFile,
-          imageUrl,
-        },
+        formDataToSend as unknown as RoomPayload, // backend handles parsing
         (progress) => setUploadProgress(progress),
       );
 
@@ -163,167 +186,120 @@ export function RoomFormModal({
           {initialData ? "Edit Room" : "Add Room"}
         </h3>
 
-        <input
-          name="name"
-          placeholder="Room Name"
-          value={formData.name}
-          onChange={handleChange}
-          className="w-full border p-2 rounded"
-        />
+        {/* ================== Form Fields ================== */}
+        {fields.map((field) => (
+          <input
+            key={field}
+            name={field}
+            type={
+              field === "price" || field === "maxGuests" ? "number" : "text"
+            }
+            placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
+            value={formData[field]}
+            onChange={handleChange}
+            className="w-full border p-2 rounded"
+          />
+        ))}
 
-        <input
-          name="type"
-          placeholder="Room Type"
-          value={formData.type}
-          onChange={handleChange}
-          className="w-full border p-2 rounded"
-        />
-
-        <input
-          name="maxGuests"
-          type="number"
-          placeholder="Capacity"
-          value={formData.maxGuests}
-          onChange={handleChange}
-          className="w-full border p-2 rounded"
-        />
-
-        <input
-          name="price"
-          type="number"
-          placeholder="Price"
-          value={formData.price}
-          onChange={handleChange}
-          className="w-full border p-2 rounded"
-        />
-
-        <input
-          name="size"
-          placeholder="Size"
-          value={formData.size}
-          onChange={handleChange}
-          className="w-full border p-2 rounded"
-        />
-
-        <input
-          name="bedType"
-          placeholder="Bed Type"
-          value={formData.bedType}
-          onChange={handleChange}
-          className="w-full border p-2 rounded"
-        />
-
-        <input
-          placeholder="Image URL (optional)"
-          value={imageUrl}
-          onChange={(e) => {
-            setImageUrl(e.target.value);
-            setImageFile(null);
-            setPreview(e.target.value);
-            setZoom(1);
-            setRotation(0);
-          }}
-          className="w-full border p-2 rounded"
-        />
-
-        <div className="text-center text-sm text-gray-500">OR</div>
-
-        <label className="flex items-center gap-2 cursor-pointer bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-fit">
+        {/* ================== Image Upload ================== */}
+        <label
+          className={`flex items-center gap-2 cursor-pointer px-4 py-2 rounded w-fit text-white ${
+            images.length >= 2
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+          }`}
+        >
           <Upload size={16} />
-          Choose Image
+          Choose Images (2 required)
           <input
             type="file"
             accept="image/*"
-            onChange={handleFileChange}
+            multiple
             hidden
+            disabled={images.length >= 2}
+            onChange={handleFileChange}
           />
         </label>
 
-        {preview && (
-          <div className="border rounded-lg p-4 bg-gray-50 space-y-4">
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setZoom((z) => Math.min(z + 0.2, 3))}
-                className="flex items-center gap-1 px-3 py-1 bg-white border rounded hover:bg-gray-100"
-                disabled={uploading}
-              >
-                <ZoomIn size={16} /> Zoom In
-              </button>
+        <p className="text-sm text-gray-500">
+          {images.length}/2 images uploaded
+        </p>
 
-              <button
-                onClick={() => setZoom((z) => Math.max(z - 0.2, 0.5))}
-                className="flex items-center gap-1 px-3 py-1 bg-white border rounded hover:bg-gray-100"
-                disabled={uploading}
+        {/* ================== Preview + Editor ================== */}
+        {images.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {images.map((img, index) => (
+              <div
+                key={index}
+                className="border rounded-lg p-4 bg-gray-50 space-y-4"
               >
-                <ZoomOut size={16} /> Zoom Out
-              </button>
-
-              <button
-                onClick={() => setRotation((r) => r + 90)}
-                className="flex items-center gap-1 px-3 py-1 bg-white border rounded hover:bg-gray-100"
-                disabled={uploading}
-              >
-                <RotateCw size={16} /> Rotate Right
-              </button>
-
-              <button
-                onClick={() => setRotation((r) => r - 90)}
-                className="flex items-center gap-1 px-3 py-1 bg-white border rounded hover:bg-gray-100"
-                disabled={uploading}
-              >
-                <RotateCcw size={16} /> Rotate Left
-              </button>
-
-              <button
-                onClick={applyTransformations}
-                className="flex items-center gap-1 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
-                disabled={uploading || !preview}
-              >
-                <RefreshCw size={16} /> Apply Edits
-              </button>
-
-              <button
-                onClick={() => {
-                  setPreview("");
-                  setImageFile(null);
-                  setImageUrl("");
-                  setZoom(1);
-                  setRotation(0);
-                }}
-                className="flex items-center gap-1 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                disabled={uploading}
-              >
-                <Trash2 size={16} /> Remove
-              </button>
-
-              <button
-                onClick={() => {
-                  setZoom(1);
-                  setRotation(0);
-                }}
-                className="flex items-center gap-1 px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600"
-                disabled={uploading}
-              >
-                <RefreshCw size={16} /> Reset View
-              </button>
-            </div>
-
-            <div className="w-full h-[400px] overflow-auto bg-black rounded flex items-center justify-center">
-              <img
-                src={preview}
-                alt="Preview"
-                className="transition-transform duration-200 ease-out"
-                style={{
-                  transform: `scale(${zoom}) rotate(${rotation}deg)`,
-                  maxWidth: "100%",
-                  maxHeight: "100%",
-                  objectFit: "contain",
-                }}
-              />
-            </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() =>
+                      updateImage(index, { zoom: Math.min(img.zoom + 0.2, 3) })
+                    }
+                    className="px-3 py-1 bg-white border rounded hover:bg-gray-100"
+                  >
+                    <ZoomIn size={16} />
+                  </button>
+                  <button
+                    onClick={() =>
+                      updateImage(index, {
+                        zoom: Math.max(img.zoom - 0.2, 0.5),
+                      })
+                    }
+                    className="px-3 py-1 bg-white border rounded hover:bg-gray-100"
+                  >
+                    <ZoomOut size={16} />
+                  </button>
+                  <button
+                    onClick={() =>
+                      updateImage(index, { rotation: img.rotation + 90 })
+                    }
+                    className="px-3 py-1 bg-white border rounded hover:bg-gray-100"
+                  >
+                    <RotateCw size={16} />
+                  </button>
+                  <button
+                    onClick={() =>
+                      updateImage(index, { rotation: img.rotation - 90 })
+                    }
+                    className="px-3 py-1 bg-white border rounded hover:bg-gray-100"
+                  >
+                    <RotateCcw size={16} />
+                  </button>
+                  <button
+                    onClick={() => applyTransformations(index)}
+                    className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                  >
+                    <RefreshCw size={16} />
+                  </button>
+                  <button
+                    onClick={() => removeImage(index)}
+                    className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+                <div className="w-full h-64 overflow-auto bg-black rounded flex items-center justify-center">
+                  <img
+                    src={img.preview}
+                    alt=""
+                    className="transition-transform duration-200 ease-out"
+                    style={{
+                      transform: `scale(${img.zoom}) rotate(${img.rotation}deg)`,
+                      maxWidth: "100%",
+                      maxHeight: "100%",
+                      objectFit: "contain",
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
+        {/* ================== Progress & Buttons ================== */}
         {uploading && (
           <div className="w-full bg-gray-200 rounded h-3">
             <div
@@ -341,10 +317,9 @@ export function RoomFormModal({
           >
             {uploading ? `Uploading ${uploadProgress}%` : "Save Room"}
           </button>
-
           <button
-            onClick={onClose}
             disabled={uploading}
+            onClick={onClose}
             className="flex-1 bg-gray-300 py-3 rounded hover:bg-gray-400 disabled:opacity-50"
           >
             Cancel

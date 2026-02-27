@@ -4,10 +4,11 @@ import { authMiddleware } from "../middleware/auth.middleware.ts";
 import { prisma } from "../../lib/prisma.ts";
 import { cloudinary } from "../../cloudinary.config.ts";
 
-const upload = multer({ dest: "temp/" });
 const router = Router();
-
 router.use(authMiddleware);
+
+// Use multer to store temporarily before upload to Cloudinary
+const upload = multer({ dest: "temp/" });
 
 // ================= GET ALL ROOMS =================
 router.get("/", async (req, res) => {
@@ -25,20 +26,35 @@ router.get("/:id", async (req, res) => {
 });
 
 // ================= CREATE ROOM =================
-router.post("/", upload.single("image"), async (req, res) => {
+// Accept up to 2 images
+router.post("/", upload.array("images", 2), async (req, res) => {
   try {
     const { name, type, price, maxGuests, size, bedType, available } = req.body;
 
-    let imageUrl = "";
+    const imageUrls: string[] = [];
 
-    // Upload file to Cloudinary if provided
-    if (req.file) {
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: "rooms",
-      });
-      imageUrl = result.secure_url;
-    } else if (req.body.image) {
-      imageUrl = req.body.image;
+    // Upload each file to Cloudinary
+    if (req.files && Array.isArray(req.files)) {
+      for (const file of req.files) {
+        const result = await cloudinary.uploader.upload(file.path, {
+          folder: "rooms",
+        });
+        imageUrls.push(result.secure_url);
+      }
+    }
+
+    // Fallback if client sends image URLs in body
+    if (req.body.images) {
+      const urls = Array.isArray(req.body.images)
+        ? req.body.images
+        : [req.body.images];
+      imageUrls.push(...urls);
+    }
+
+    if (imageUrls.length !== 2) {
+      return res
+        .status(400)
+        .json({ message: "Exactly 2 images are required." });
     }
 
     const room = await prisma.room.create({
@@ -50,7 +66,7 @@ router.post("/", upload.single("image"), async (req, res) => {
         size,
         bedType,
         available: available === "true",
-        image: imageUrl,
+        image: imageUrls.join(","), // Store as CSV
       },
     });
 
@@ -62,19 +78,27 @@ router.post("/", upload.single("image"), async (req, res) => {
 });
 
 // ================= UPDATE ROOM =================
-router.put("/:id", upload.single("image"), async (req, res) => {
+router.put("/:id", upload.array("images", 2), async (req, res) => {
   try {
     const roomId = Number(req.params.id);
     if (!roomId) return res.status(400).json({ message: "Invalid room ID" });
 
-    let imageUrl = req.body.imageUrl ?? req.body.image ?? "";
+    const imageUrls: string[] = [];
 
-    // Upload new file if provided
-    if (req.file) {
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: "rooms",
-      });
-      imageUrl = result.secure_url;
+    if (req.files && Array.isArray(req.files)) {
+      for (const file of req.files) {
+        const result = await cloudinary.uploader.upload(file.path, {
+          folder: "rooms",
+        });
+        imageUrls.push(result.secure_url);
+      }
+    }
+
+    if (req.body.images) {
+      const urls = Array.isArray(req.body.images)
+        ? req.body.images
+        : [req.body.images];
+      imageUrls.push(...urls);
     }
 
     const room = await prisma.room.update({
@@ -89,7 +113,7 @@ router.put("/:id", upload.single("image"), async (req, res) => {
           req.body.available !== undefined
             ? req.body.available === "true" || req.body.available === true
             : undefined,
-        image: imageUrl || undefined,
+        image: imageUrls.length > 0 ? imageUrls.join(",") : undefined,
       },
     });
 

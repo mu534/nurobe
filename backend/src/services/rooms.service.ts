@@ -1,6 +1,6 @@
 import { prisma } from "../../lib/prisma.ts";
 
-export async function createRoomService(data: {
+interface RoomCreatePayload {
   name: string;
   type: string;
   price: number;
@@ -8,7 +8,16 @@ export async function createRoomService(data: {
   size: string;
   bedType: string;
   available: boolean;
-  image: string;
-}) {
-  return prisma.room.create({ data });
+  images: string[];
+}
+
+export async function createRoomService(data: RoomCreatePayload) {
+  const { images, ...rest } = data;
+
+  return prisma.room.create({
+    data: {
+      ...rest,
+      image: images.join(","),
+    },
+  });
 }

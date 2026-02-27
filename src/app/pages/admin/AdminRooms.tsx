@@ -14,20 +14,19 @@ import {
   deleteRoom,
 } from "../../../api/rooms";
 
-type RoomPayload = Omit<Room, "id" | "image"> & {
-  imageFile?: File | null;
-  imageUrl?: string;
+type RoomPayload = Omit<Room, "id" | "images"> & {
+  images: File[];
 };
 
 export function AdminRooms() {
   const navigate = useNavigate();
-
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
 
+  // ================= Fetch Rooms =================
   const fetchRooms = async () => {
     try {
       setLoading(true);
@@ -45,6 +44,7 @@ export function AdminRooms() {
     fetchRooms();
   }, []);
 
+  // ================= Delete Room =================
   const handleDelete = async (id: number) => {
     if (!confirm("Are you sure you want to delete this room?")) return;
 
@@ -57,6 +57,7 @@ export function AdminRooms() {
     }
   };
 
+  // ================= Toggle Availability =================
   const toggleAvailability = async (id: number) => {
     try {
       const room = rooms.find((r) => r.id === id);
@@ -64,10 +65,7 @@ export function AdminRooms() {
 
       const updatedRoom = await updateRoom(
         id,
-        {
-          ...room,
-          available: !room.available,
-        },
+        { ...room, available: !room.available },
         () => {},
       );
 
@@ -78,9 +76,7 @@ export function AdminRooms() {
     }
   };
 
-  // =========================
-  // Add Room
-  // =========================
+  // ================= Add Room =================
   const handleAddRoom = async (
     data: RoomPayload,
     onProgress: (progress: number) => void,
@@ -95,6 +91,7 @@ export function AdminRooms() {
     }
   };
 
+  // ================= Update Room =================
   const handleUpdateRoom = async (
     data: RoomPayload,
     onProgress: (progress: number) => void,
@@ -103,11 +100,9 @@ export function AdminRooms() {
 
     try {
       const updatedRoom = await updateRoom(editingRoom.id, data, onProgress);
-
       setRooms((prev) =>
         prev.map((r) => (r.id === editingRoom.id ? updatedRoom : r)),
       );
-
       setEditingRoom(null);
     } catch (error) {
       console.error("Failed to update room:", error);
@@ -190,9 +185,7 @@ export function AdminRooms() {
                     onDelete={handleDelete}
                     onEdit={(id) => {
                       const roomToEdit = rooms.find((r) => r.id === id);
-                      if (roomToEdit) {
-                        setEditingRoom(roomToEdit);
-                      }
+                      if (roomToEdit) setEditingRoom(roomToEdit);
                     }}
                   />
                 ))}

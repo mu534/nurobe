@@ -9,3 +9,7 @@ export interface Room {
   size: string;
   bedType: string;
 }
+
+export type RoomPayload = Omit<Room, "id"> & {
+  images: File[];
+};
