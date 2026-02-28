@@ -10,6 +10,7 @@ export interface Room {
   size: string;
   bedType: string;
   available: boolean;
+
   gallery: string[];
 }
 

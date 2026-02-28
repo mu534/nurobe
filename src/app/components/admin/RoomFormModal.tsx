@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Room, RoomPayload } from "../../../types/types";
+import type { Room } from "../../../types/types";
 import {
   Upload,
   Trash2,
@@ -32,7 +32,7 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (
-    data: RoomPayload,
+    data: FormData,
     onProgress: (progress: number) => void,
   ) => Promise<void>;
   initialData?: Room;
@@ -153,7 +153,6 @@ export function RoomFormModal({
       setUploading(true);
       setUploadProgress(0);
 
-      // Create FormData to send to backend
       const formDataToSend = new FormData();
       formDataToSend.append("name", formData.name);
       formDataToSend.append("type", formData.type);
@@ -162,13 +161,9 @@ export function RoomFormModal({
       formDataToSend.append("size", formData.size);
       formDataToSend.append("bedType", formData.bedType);
       formDataToSend.append("available", String(formData.available));
-      images.forEach((img) => formDataToSend.append(`images`, img.file));
+      images.forEach((img) => formDataToSend.append("images", img.file));
 
-      // Send to backend
-      await onSubmit(
-        formDataToSend as unknown as RoomPayload, // backend handles parsing
-        (progress) => setUploadProgress(progress),
-      );
+      await onSubmit(formDataToSend, (progress) => setUploadProgress(progress));
 
       setUploading(false);
       onClose();

@@ -27,59 +27,47 @@ export const getRoomById = async (id: number): Promise<Room> => {
 };
 
 export const createRoom = async (
-  data: RoomPayload,
+  data: FormData,
   onProgress?: (progress: number) => void,
 ): Promise<Room> => {
-  const formData = new FormData();
-
-  formData.append("name", data.name);
-  formData.append("type", data.type);
-  formData.append("price", String(data.price));
-  formData.append("maxGuests", String(data.maxGuests));
-  formData.append("size", data.size);
-  formData.append("bedType", data.bedType);
-  formData.append("available", String(data.available));
-
-  if (data.imageFile) formData.append("image", data.imageFile);
-  if (data.imageUrl) formData.append("image", data.imageUrl);
-
-  const res = await api.post<Room>("/rooms", formData, {
+  const res = await api.post<Room>("/rooms", data, {
     headers: { ...getAuthHeaders(), "Content-Type": "multipart/form-data" },
     onUploadProgress: (e) => {
       if (!onProgress || !e.total) return;
       onProgress(Math.round((e.loaded * 100) / e.total));
     },
   });
-
   return res.data;
 };
 
 export const updateRoom = async (
   id: number,
-  data: RoomPayload,
+  data: FormData | RoomPayload,
   onProgress?: (progress: number) => void,
 ): Promise<Room> => {
-  const formData = new FormData();
+  let payload: FormData;
 
-  formData.append("name", data.name);
-  formData.append("type", data.type);
-  formData.append("price", String(data.price));
-  formData.append("maxGuests", String(data.maxGuests));
-  formData.append("size", data.size);
-  formData.append("bedType", data.bedType);
-  formData.append("available", String(data.available));
+  if (data instanceof FormData) {
+    payload = data;
+  } else {
+    // Called from toggleAvailability with a plain object
+    payload = new FormData();
+    payload.append("name", data.name);
+    payload.append("type", data.type);
+    payload.append("price", String(data.price));
+    payload.append("maxGuests", String(data.maxGuests));
+    payload.append("size", data.size);
+    payload.append("bedType", data.bedType);
+    payload.append("available", String(data.available));
+  }
 
-  if (data.imageFile) formData.append("image", data.imageFile);
-  if (data.imageUrl) formData.append("image", data.imageUrl);
-
-  const res = await api.put<Room>(`/rooms/${id}`, formData, {
+  const res = await api.put<Room>(`/rooms/${id}`, payload, {
     headers: { ...getAuthHeaders(), "Content-Type": "multipart/form-data" },
     onUploadProgress: (e) => {
       if (!onProgress || !e.total) return;
       onProgress(Math.round((e.loaded * 100) / e.total));
     },
   });
-
   return res.data;
 };
 

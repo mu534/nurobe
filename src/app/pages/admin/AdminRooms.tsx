@@ -14,9 +14,7 @@ import {
   deleteRoom,
 } from "../../../api/rooms";
 
-type RoomPayload = Omit<Room, "id" | "images"> & {
-  images: File[];
-};
+type RoomPayload = FormData;
 
 export function AdminRooms() {
   const navigate = useNavigate();

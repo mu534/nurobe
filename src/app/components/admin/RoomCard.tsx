@@ -18,7 +18,7 @@ export function RoomCard({
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <div className="relative h-48">
         <img
-          src={room.image}
+          src={room.image.split(",")[0]}
           alt={room.name}
           className="w-full h-full object-cover"
         />

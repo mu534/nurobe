@@ -9,6 +9,7 @@ export interface Room {
   size: string;
   bedType: string;
   available: boolean;
+  image: string;
 }
 
 export const getRooms = async () => {
