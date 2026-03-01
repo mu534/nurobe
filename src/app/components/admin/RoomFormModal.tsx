@@ -8,25 +8,78 @@ import {
   RotateCw,
   RotateCcw,
   RefreshCw,
+  X,
+  Wifi,
+  Tv,
+  Wind,
+  Bath,
+  ConciergeBell,
+  UtensilsCrossed,
+  Coffee,
+  Armchair,
 } from "lucide-react";
 
-// ================== Strict typing for form fields ==================
 type FormFields = "name" | "type" | "maxGuests" | "price" | "size" | "bedType";
-const fields: FormFields[] = [
-  "name",
-  "type",
-  "maxGuests",
-  "price",
-  "size",
-  "bedType",
+
+const fieldConfig: {
+  name: FormFields;
+  label: string;
+  type: string;
+  placeholder: string;
+}[] = [
+  {
+    name: "name",
+    label: "Room Name",
+    type: "text",
+    placeholder: "e.g. Deluxe King Room",
+  },
+  {
+    name: "type",
+    label: "Room Type",
+    type: "text",
+    placeholder: "e.g. standard, deluxe, suite",
+  },
+  {
+    name: "price",
+    label: "Price per Night ($)",
+    type: "number",
+    placeholder: "e.g. 120",
+  },
+  {
+    name: "maxGuests",
+    label: "Max Guests",
+    type: "number",
+    placeholder: "e.g. 2",
+  },
+  { name: "size", label: "Room Size", type: "text", placeholder: "e.g. 35 m²" },
+  {
+    name: "bedType",
+    label: "Bed Type",
+    type: "text",
+    placeholder: "e.g. King Bed",
+  },
+];
+
+const AMENITY_OPTIONS = [
+  { label: "WiFi", icon: Wifi },
+  { label: "TV", icon: Tv },
+  { label: "Air Conditioning", icon: Wind },
+  { label: "Private Bathroom", icon: Bath },
+  { label: "Room Service", icon: ConciergeBell },
+  { label: "Breakfast Included", icon: UtensilsCrossed },
+  { label: "Coffee Maker", icon: Coffee },
+  { label: "Balcony", icon: Armchair },
 ];
 
 type EditableImage = {
-  file: File;
+  file: File | null; // null = existing URL image (no file)
   preview: string;
   zoom: number;
   rotation: number;
+  isExisting?: boolean; // true = loaded from initialData
 };
+
+type FormErrors = Partial<Record<FormFields | "images", string>>;
 
 interface Props {
   isOpen: boolean;
@@ -44,6 +97,19 @@ export function RoomFormModal({
   onSubmit,
   initialData,
 }: Props) {
+  const existingImages: EditableImage[] = initialData?.image
+    ? initialData.image
+        .split(",")
+        .filter(Boolean)
+        .map((url) => ({
+          file: null,
+          preview: url,
+          zoom: 1,
+          rotation: 0,
+          isExisting: true,
+        }))
+    : [];
+
   const [formData, setFormData] = useState({
     name: initialData?.name ?? "",
     type: initialData?.type ?? "",
@@ -54,11 +120,40 @@ export function RoomFormModal({
     bedType: initialData?.bedType ?? "",
   });
 
-  const [images, setImages] = useState<EditableImage[]>([]);
+  const [amenities, setAmenities] = useState<string[]>([
+    "WiFi",
+    "TV",
+    "Air Conditioning",
+    "Private Bathroom",
+    "Room Service",
+  ]);
+  const [images, setImages] = useState<EditableImage[]>(existingImages);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
 
   if (!isOpen) return null;
+
+  // ================== Validation ==================
+  const validate = (): boolean => {
+    const newErrors: FormErrors = {};
+    if (!formData.name.trim()) newErrors.name = "Room name is required";
+    if (!formData.type.trim()) newErrors.type = "Room type is required";
+    if (!formData.price || formData.price <= 0)
+      newErrors.price = "Price must be greater than 0";
+    if (!formData.maxGuests || formData.maxGuests < 1)
+      newErrors.maxGuests = "At least 1 guest required";
+    if (!formData.size.trim()) newErrors.size = "Room size is required";
+    if (!formData.bedType.trim()) newErrors.bedType = "Bed type is required";
+
+    const newImageCount = images.filter((i) => !i.isExisting).length;
+    const existingCount = images.filter((i) => i.isExisting).length;
+    const totalImages = newImageCount + existingCount;
+    if (totalImages !== 2) newErrors.images = "Exactly 2 images are required";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   // ================== Handlers ==================
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -67,26 +162,43 @@ export function RoomFormModal({
       ...prev,
       [name]: name === "price" || name === "maxGuests" ? Number(value) : value,
     }));
+    if (errors[name as FormFields]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
+  };
+
+  const toggleAmenity = (label: string) => {
+    setAmenities((prev) =>
+      prev.includes(label) ? prev.filter((a) => a !== label) : [...prev, label],
+    );
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-
     const selectedFiles = Array.from(files);
-    if (selectedFiles.length + images.length > 2) {
-      alert("You must upload exactly 2 images.");
+    const currentNewCount = images.filter((i) => !i.isExisting).length;
+    if (
+      selectedFiles.length +
+        currentNewCount +
+        images.filter((i) => i.isExisting).length >
+      2
+    ) {
+      setErrors((prev) => ({
+        ...prev,
+        images: "You can upload exactly 2 images total.",
+      }));
       return;
     }
-
     const newImages: EditableImage[] = selectedFiles.map((file) => ({
       file,
       preview: URL.createObjectURL(file),
       zoom: 1,
       rotation: 0,
+      isExisting: false,
     }));
-
     setImages((prev) => [...prev, ...newImages]);
+    setErrors((prev) => ({ ...prev, images: undefined }));
   };
 
   const updateImage = (index: number, updates: Partial<EditableImage>) => {
@@ -104,6 +216,7 @@ export function RoomFormModal({
 
     const img = await new Promise<HTMLImageElement>((resolve, reject) => {
       const image = new Image();
+      image.crossOrigin = "anonymous";
       image.onload = () => resolve(image);
       image.onerror = reject;
       image.src = imageData.preview;
@@ -115,13 +228,11 @@ export function RoomFormModal({
     const cos = Math.abs(Math.cos(rad));
     const scaledWidth = img.width * imageData.zoom;
     const scaledHeight = img.height * imageData.zoom;
-
     canvas.width = scaledWidth * cos + scaledHeight * sin;
     canvas.height = scaledWidth * sin + scaledHeight * cos;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-
     ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.rotate(rad);
     ctx.scale(imageData.zoom, imageData.zoom);
@@ -140,14 +251,12 @@ export function RoomFormModal({
       preview: URL.createObjectURL(newFile),
       zoom: 1,
       rotation: 0,
+      isExisting: false,
     });
   };
 
   const handleSubmit = async () => {
-    if (images.length !== 2) {
-      alert("You must upload exactly 2 images.");
-      return;
-    }
+    if (!validate()) return;
 
     try {
       setUploading(true);
@@ -161,10 +270,18 @@ export function RoomFormModal({
       formDataToSend.append("size", formData.size);
       formDataToSend.append("bedType", formData.bedType);
       formDataToSend.append("available", String(formData.available));
-      images.forEach((img) => formDataToSend.append("images", img.file));
+      formDataToSend.append("amenities", JSON.stringify(amenities));
+
+      // Append new files, and existing URLs separately
+      images.forEach((img) => {
+        if (!img.isExisting && img.file) {
+          formDataToSend.append("images", img.file);
+        } else if (img.isExisting) {
+          formDataToSend.append("images", img.preview); // existing URL
+        }
+      });
 
       await onSubmit(formDataToSend, (progress) => setUploadProgress(progress));
-
       setUploading(false);
       onClose();
     } catch (err) {
@@ -174,151 +291,302 @@ export function RoomFormModal({
     }
   };
 
+  const totalImages = images.length;
+  const canAddMore = totalImages < 2;
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-start justify-center p-4 z-50 overflow-y-auto">
-      <div className="bg-white rounded-lg w-full max-w-4xl p-6 space-y-6 my-10">
-        <h3 className="text-xl font-semibold">
-          {initialData ? "Edit Room" : "Add Room"}
-        </h3>
+      <div className="bg-white rounded-lg w-full max-w-4xl my-10 overflow-hidden shadow-xl">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-blue-600 to-blue-800 px-6 py-5 flex items-center justify-between">
+          <h3 className="text-xl text-white">
+            {initialData ? "Edit Room" : "Add New Room"}
+          </h3>
+          <button
+            onClick={onClose}
+            className="text-white/80 hover:text-white transition"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
 
-        {/* ================== Form Fields ================== */}
-        {fields.map((field) => (
-          <input
-            key={field}
-            name={field}
-            type={
-              field === "price" || field === "maxGuests" ? "number" : "text"
-            }
-            placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-            value={formData[field]}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-          />
-        ))}
-
-        {/* ================== Image Upload ================== */}
-        <label
-          className={`flex items-center gap-2 cursor-pointer px-4 py-2 rounded w-fit text-white ${
-            images.length >= 2
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-blue-600 hover:bg-blue-700"
-          }`}
-        >
-          <Upload size={16} />
-          Choose Images (2 required)
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            hidden
-            disabled={images.length >= 2}
-            onChange={handleFileChange}
-          />
-        </label>
-
-        <p className="text-sm text-gray-500">
-          {images.length}/2 images uploaded
-        </p>
-
-        {/* ================== Preview + Editor ================== */}
-        {images.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {images.map((img, index) => (
-              <div
-                key={index}
-                className="border rounded-lg p-4 bg-gray-50 space-y-4"
-              >
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() =>
-                      updateImage(index, { zoom: Math.min(img.zoom + 0.2, 3) })
-                    }
-                    className="px-3 py-1 bg-white border rounded hover:bg-gray-100"
-                  >
-                    <ZoomIn size={16} />
-                  </button>
-                  <button
-                    onClick={() =>
-                      updateImage(index, {
-                        zoom: Math.max(img.zoom - 0.2, 0.5),
-                      })
-                    }
-                    className="px-3 py-1 bg-white border rounded hover:bg-gray-100"
-                  >
-                    <ZoomOut size={16} />
-                  </button>
-                  <button
-                    onClick={() =>
-                      updateImage(index, { rotation: img.rotation + 90 })
-                    }
-                    className="px-3 py-1 bg-white border rounded hover:bg-gray-100"
-                  >
-                    <RotateCw size={16} />
-                  </button>
-                  <button
-                    onClick={() =>
-                      updateImage(index, { rotation: img.rotation - 90 })
-                    }
-                    className="px-3 py-1 bg-white border rounded hover:bg-gray-100"
-                  >
-                    <RotateCcw size={16} />
-                  </button>
-                  <button
-                    onClick={() => applyTransformations(index)}
-                    className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
-                  >
-                    <RefreshCw size={16} />
-                  </button>
-                  <button
-                    onClick={() => removeImage(index)}
-                    className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-                <div className="w-full h-64 overflow-auto bg-black rounded flex items-center justify-center">
-                  <img
-                    src={img.preview}
-                    alt=""
-                    className="transition-transform duration-200 ease-out"
-                    style={{
-                      transform: `scale(${img.zoom}) rotate(${img.rotation}deg)`,
-                      maxWidth: "100%",
-                      maxHeight: "100%",
-                      objectFit: "contain",
-                    }}
-                  />
-                </div>
+        <div className="p-6 space-y-6">
+          {/* Form Fields */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {fieldConfig.map((field) => (
+              <div key={field.name}>
+                <label className="block text-sm text-gray-700 mb-1">
+                  {field.label}
+                </label>
+                <input
+                  name={field.name}
+                  type={field.type}
+                  placeholder={field.placeholder}
+                  value={formData[field.name]}
+                  onChange={handleChange}
+                  className={`w-full border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    errors[field.name]
+                      ? "border-red-400 bg-red-50"
+                      : "border-gray-300"
+                  }`}
+                />
+                {errors[field.name] && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors[field.name]}
+                  </p>
+                )}
               </div>
             ))}
           </div>
-        )}
 
-        {/* ================== Progress & Buttons ================== */}
-        {uploading && (
-          <div className="w-full bg-gray-200 rounded h-3">
-            <div
-              className="bg-blue-600 h-3 rounded transition-all duration-300"
-              style={{ width: `${uploadProgress}%` }}
-            />
+          {/* Availability Toggle */}
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-700">Availability</span>
+            <button
+              onClick={() =>
+                setFormData((prev) => ({ ...prev, available: !prev.available }))
+              }
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                formData.available ? "bg-green-500" : "bg-gray-300"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                  formData.available ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+            <span
+              className={`text-sm font-medium ${formData.available ? "text-green-600" : "text-gray-500"}`}
+            >
+              {formData.available ? "Available" : "Not Available"}
+            </span>
           </div>
-        )}
 
-        <div className="flex gap-3 pt-4">
-          <button
-            disabled={uploading}
-            onClick={handleSubmit}
-            className="flex-1 bg-green-600 text-white py-3 rounded hover:bg-green-700 disabled:opacity-50 font-medium"
-          >
-            {uploading ? `Uploading ${uploadProgress}%` : "Save Room"}
-          </button>
-          <button
-            disabled={uploading}
-            onClick={onClose}
-            className="flex-1 bg-gray-300 py-3 rounded hover:bg-gray-400 disabled:opacity-50"
-          >
-            Cancel
-          </button>
+          {/* Amenities */}
+          <div>
+            <label className="block text-sm text-gray-700 mb-3">
+              Amenities
+            </label>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {AMENITY_OPTIONS.map(({ label, icon: Icon }) => {
+                const checked = amenities.includes(label);
+                return (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={() => toggleAmenity(label)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition ${
+                      checked
+                        ? "bg-blue-50 border-blue-500 text-blue-700"
+                        : "bg-white border-gray-200 text-gray-500 hover:border-gray-300"
+                    }`}
+                  >
+                    <Icon
+                      className={`w-4 h-4 ${checked ? "text-blue-600" : "text-gray-400"}`}
+                    />
+                    <span className="truncate">{label}</span>
+                    <span
+                      className={`ml-auto w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0 ${
+                        checked
+                          ? "bg-blue-600 border-blue-600"
+                          : "border-gray-300"
+                      }`}
+                    >
+                      {checked && (
+                        <svg
+                          className="w-2.5 h-2.5 text-white"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={3}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      )}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Image Upload */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <label className="text-sm text-gray-700">
+                Room Images{" "}
+                <span className="text-gray-400">(exactly 2 required)</span>
+              </label>
+              <span
+                className={`text-xs px-2 py-1 rounded-full ${
+                  totalImages === 2
+                    ? "bg-green-100 text-green-700"
+                    : "bg-yellow-100 text-yellow-700"
+                }`}
+              >
+                {totalImages}/2 uploaded
+              </span>
+            </div>
+
+            <label
+              className={`flex items-center justify-center gap-2 w-full py-4 border-2 border-dashed rounded-lg transition ${
+                !canAddMore
+                  ? "border-gray-200 bg-gray-50 cursor-not-allowed text-gray-400"
+                  : "border-blue-300 hover:border-blue-500 hover:bg-blue-50 text-blue-600 cursor-pointer"
+              }`}
+            >
+              <Upload size={18} />
+              <span className="text-sm">
+                {!canAddMore ? "2 images uploaded" : "Click to upload images"}
+              </span>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                hidden
+                disabled={!canAddMore}
+                onChange={handleFileChange}
+              />
+            </label>
+
+            {errors.images && (
+              <p className="text-xs text-red-500 mt-1">{errors.images}</p>
+            )}
+          </div>
+
+          {/* Image Previews */}
+          {images.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {images.map((img, index) => (
+                <div
+                  key={index}
+                  className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50"
+                >
+                  {/* Toolbar */}
+                  <div className="flex items-center gap-1 p-3 border-b border-gray-200 bg-white flex-wrap">
+                    <span className="text-xs text-gray-500 mr-2">
+                      Image {index + 1}
+                      {img.isExisting && (
+                        <span className="ml-1 text-blue-500">(existing)</span>
+                      )}
+                    </span>
+                    <button
+                      onClick={() =>
+                        updateImage(index, {
+                          zoom: Math.min(img.zoom + 0.2, 3),
+                        })
+                      }
+                      className="p-1.5 bg-gray-100 rounded hover:bg-gray-200 transition"
+                      title="Zoom in"
+                    >
+                      <ZoomIn size={14} />
+                    </button>
+                    <button
+                      onClick={() =>
+                        updateImage(index, {
+                          zoom: Math.max(img.zoom - 0.2, 0.5),
+                        })
+                      }
+                      className="p-1.5 bg-gray-100 rounded hover:bg-gray-200 transition"
+                      title="Zoom out"
+                    >
+                      <ZoomOut size={14} />
+                    </button>
+                    <button
+                      onClick={() =>
+                        updateImage(index, { rotation: img.rotation + 90 })
+                      }
+                      className="p-1.5 bg-gray-100 rounded hover:bg-gray-200 transition"
+                      title="Rotate right"
+                    >
+                      <RotateCw size={14} />
+                    </button>
+                    <button
+                      onClick={() =>
+                        updateImage(index, { rotation: img.rotation - 90 })
+                      }
+                      className="p-1.5 bg-gray-100 rounded hover:bg-gray-200 transition"
+                      title="Rotate left"
+                    >
+                      <RotateCcw size={14} />
+                    </button>
+                    <button
+                      onClick={() => applyTransformations(index)}
+                      className="p-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                      title="Apply transformations"
+                    >
+                      <RefreshCw size={14} />
+                    </button>
+                    <button
+                      onClick={() => removeImage(index)}
+                      className="p-1.5 bg-red-500 text-white rounded hover:bg-red-600 transition ml-auto"
+                      title="Remove image"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+
+                  {/* Preview */}
+                  <div
+                    className="w-full bg-black flex items-center justify-center"
+                    style={{ aspectRatio: "16/9" }}
+                  >
+                    <img
+                      src={img.preview}
+                      alt={`Preview ${index + 1}`}
+                      className="transition-transform duration-200 ease-out max-w-full max-h-full object-contain"
+                      style={{
+                        transform: `scale(${img.zoom}) rotate(${img.rotation}deg)`,
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Upload Progress */}
+          {uploading && (
+            <div>
+              <div className="flex justify-between text-xs text-gray-500 mb-1">
+                <span>Uploading...</span>
+                <span>{uploadProgress}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex gap-3 pt-2">
+            <button
+              disabled={uploading}
+              onClick={handleSubmit}
+              className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition text-sm font-medium"
+            >
+              {uploading
+                ? `Uploading ${uploadProgress}%`
+                : initialData
+                  ? "Save Changes"
+                  : "Add Room"}
+            </button>
+            <button
+              disabled={uploading}
+              onClick={onClose}
+              className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 disabled:opacity-50 transition text-sm"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -63,7 +63,6 @@ router.post("/", upload.array("images", 2), async (req, res) => {
 
     const imageUrls: string[] = [];
 
-    // Upload files to Cloudinary
     if (req.files && Array.isArray(req.files)) {
       for (const file of req.files) {
         const result = await cloudinary.uploader.upload(file.path, {
@@ -73,7 +72,6 @@ router.post("/", upload.array("images", 2), async (req, res) => {
       }
     }
 
-    // Fallback if client sent image URLs directly
     if (req.body.images) {
       const urls = Array.isArray(req.body.images)
         ? req.body.images
@@ -134,19 +132,32 @@ router.put("/:id", upload.array("images", 2), async (req, res) => {
       imageUrls.push(...urls);
     }
 
+    // ✅ Sanitize all values to correct types before passing to Prisma
+    const sanitizedName = sanitizeString(name);
+    const sanitizedType = sanitizeString(type);
+    const sanitizedPrice = sanitizeNumber(price);
+    const sanitizedMaxGuests = sanitizeNumber(maxGuests);
+    const sanitizedSize = sanitizeString(size);
+    const sanitizedBedType = sanitizeString(bedType);
+    const sanitizedAvailable = sanitizeBoolean(available);
+
     const room = await prisma.room.update({
       where: { id: roomId },
       data: {
-        ...(name ? { name: { set: name } } : {}),
-        ...(type ? { type: { set: type } } : {}),
-        ...(price !== undefined ? { price: { set: price } } : {}),
-        ...(maxGuests !== undefined ? { maxGuests: { set: maxGuests } } : {}),
-        ...(size ? { size: { set: size } } : {}),
-        ...(bedType ? { bedType: { set: bedType } } : {}),
-        ...(available !== undefined ? { available: { set: available } } : {}),
-        ...(imageUrls.length > 0
-          ? { image: { set: imageUrls.join(",") } }
+        ...(sanitizedName !== undefined ? { name: sanitizedName } : {}),
+        ...(sanitizedType !== undefined ? { type: sanitizedType } : {}),
+        ...(sanitizedPrice !== undefined ? { price: sanitizedPrice } : {}),
+        ...(sanitizedMaxGuests !== undefined
+          ? { maxGuests: sanitizedMaxGuests }
           : {}),
+        ...(sanitizedSize !== undefined ? { size: sanitizedSize } : {}),
+        ...(sanitizedBedType !== undefined
+          ? { bedType: sanitizedBedType }
+          : {}),
+        ...(sanitizedAvailable !== undefined
+          ? { available: sanitizedAvailable }
+          : {}),
+        ...(imageUrls.length > 0 ? { image: imageUrls.join(",") } : {}),
       },
     });
 
