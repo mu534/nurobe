@@ -228,7 +228,7 @@ export function RoomDetailsPage() {
                 </p>
               </div>
 
-              {/* Amenities — from API */}
+              {/* Amenities */}
               {amenities.length > 0 && (
                 <div>
                   <h2 className="text-xl mb-4">Amenities</h2>
