@@ -6,33 +6,34 @@ import {
   Wifi,
   Tv,
   Wind,
+  Bath,
+  ConciergeBell,
+  UtensilsCrossed,
   Coffee,
+  Armchair,
   Users,
   Maximize,
   BedDouble,
 } from "lucide-react";
 import { getRoomById } from "../../api/rooms";
 import type { Room } from "../../types/types";
+import { getRoomImages, getRoomAmenities } from "../../types/types";
 import NavBar from "../components/NavBar";
 
 function generateDescription(room: Room): string {
   return `${room.name} features a ${room.bedType.toLowerCase()} in a ${room.size} space, accommodating up to ${room.maxGuests} guests. Enjoy a comfortable and memorable stay with modern amenities and a peaceful atmosphere.`;
 }
 
-function generateAmenities(room: Room): string[] {
-  const base = [
-    "WiFi",
-    "TV",
-    "Air Conditioning",
-    "Private Bathroom",
-    "Room Service",
-  ];
-  if (room.type === "deluxe" || room.type === "suite")
-    base.push("Balcony", "Breakfast Included");
-  if (room.type === "suite") base.push("Coffee Maker", "Work Desk");
-  if (room.maxGuests >= 4) base.push("Extra Bed Available");
-  return base;
-}
+const AMENITY_ICONS: Record<string, React.ElementType> = {
+  WiFi: Wifi,
+  TV: Tv,
+  "Air Conditioning": Wind,
+  "Private Bathroom": Bath,
+  "Room Service": ConciergeBell,
+  "Breakfast Included": UtensilsCrossed,
+  "Coffee Maker": Coffee,
+  Balcony: Armchair,
+};
 
 export function RoomDetailsPage() {
   const { id } = useParams();
@@ -73,15 +74,13 @@ export function RoomDetailsPage() {
     );
   }
 
-  const gallery = room.image ? room.image.split(",").filter(Boolean) : [];
-  const amenities = generateAmenities(room);
-  const description = generateDescription(room);
+  const gallery = getRoomImages(room);
+  const amenities = getRoomAmenities(room);
 
   const nextImage = () =>
     setCurrentImageIndex((prev) =>
       prev === gallery.length - 1 ? 0 : prev + 1,
     );
-
   const prevImage = () =>
     setCurrentImageIndex((prev) =>
       prev === 0 ? gallery.length - 1 : prev - 1,
@@ -105,14 +104,13 @@ export function RoomDetailsPage() {
     );
   };
 
-  const amenityIcons: Record<string, React.ElementType> = {
-    WiFi: Wifi,
-    TV: Tv,
-    "Air Conditioning": Wind,
-    "Coffee Maker": Coffee,
-    Balcony: Maximize,
-    "Work Desk": BedDouble,
-  };
+  const nights =
+    checkIn && checkOut
+      ? Math.ceil(
+          (new Date(checkOut).getTime() - new Date(checkIn).getTime()) /
+            (1000 * 60 * 60 * 24),
+        )
+      : 0;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -131,11 +129,14 @@ export function RoomDetailsPage() {
           <div className="lg:col-span-2">
             {/* Image Gallery */}
             <div className="bg-white rounded-lg overflow-hidden shadow mb-6">
-              <div className="relative w-full aspect-[16/9] bg-gray-100 overflow-hidden">
+              <div
+                className="relative w-full bg-gray-100"
+                style={{ aspectRatio: "16/9" }}
+              >
                 <img
                   src={gallery[currentImageIndex]}
                   alt={`${room.name} - Image ${currentImageIndex + 1}`}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                 />
                 {gallery.length > 1 && (
                   <>
@@ -156,31 +157,28 @@ export function RoomDetailsPage() {
                         <button
                           key={idx}
                           onClick={() => setCurrentImageIndex(idx)}
-                          className={`w-2 h-2 rounded-full transition ${
-                            idx === currentImageIndex
-                              ? "bg-white"
-                              : "bg-white/50"
-                          }`}
+                          className={`w-2 h-2 rounded-full transition ${idx === currentImageIndex ? "bg-white" : "bg-white/50"}`}
                         />
                       ))}
                     </div>
                   </>
                 )}
               </div>
+
+              {/* Thumbnails */}
               {gallery.length > 1 && (
-                <div className="p-4 grid grid-cols-4 gap-2">
+                <div className="p-4 grid grid-cols-2 gap-3">
                   {gallery.map((img, idx) => (
                     <button
                       key={idx}
                       onClick={() => setCurrentImageIndex(idx)}
-                      className={`relative h-20 rounded overflow-hidden ${
-                        idx === currentImageIndex ? "ring-2 ring-blue-600" : ""
-                      }`}
+                      className={`relative rounded overflow-hidden bg-gray-100 ${idx === currentImageIndex ? "ring-2 ring-blue-600" : ""}`}
+                      style={{ aspectRatio: "16/9" }}
                     >
                       <img
                         src={img}
                         alt={`Thumbnail ${idx + 1}`}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain"
                       />
                     </button>
                   ))}
@@ -225,26 +223,31 @@ export function RoomDetailsPage() {
 
               <div className="mb-6">
                 <h2 className="text-xl mb-3">Description</h2>
-                <p className="text-gray-600 leading-relaxed">{description}</p>
+                <p className="text-gray-600 leading-relaxed">
+                  {generateDescription(room)}
+                </p>
               </div>
 
-              <div>
-                <h2 className="text-xl mb-4">Amenities</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {amenities.map((amenity, idx) => {
-                    const Icon = amenityIcons[amenity] || Wifi;
-                    return (
-                      <div
-                        key={idx}
-                        className="flex items-center gap-3 text-gray-700"
-                      >
-                        <Icon className="w-5 h-5 text-blue-600" />
-                        <span>{amenity}</span>
-                      </div>
-                    );
-                  })}
+              {/* Amenities — from API */}
+              {amenities.length > 0 && (
+                <div>
+                  <h2 className="text-xl mb-4">Amenities</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {amenities.map((amenity, idx) => {
+                      const Icon = AMENITY_ICONS[amenity] || Wifi;
+                      return (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-3 text-gray-700"
+                        >
+                          <Icon className="w-5 h-5 text-blue-600" />
+                          <span>{amenity}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -304,39 +307,19 @@ export function RoomDetailsPage() {
                 </div>
               </div>
 
-              {checkIn && checkOut && (
+              {checkIn && checkOut && nights > 0 && (
                 <div className="mb-6 p-4 bg-gray-50 rounded-lg">
                   <div className="flex justify-between mb-2">
                     <span className="text-gray-600">
-                      ${room.price} ×{" "}
-                      {Math.ceil(
-                        (new Date(checkOut).getTime() -
-                          new Date(checkIn).getTime()) /
-                          (1000 * 60 * 60 * 24),
-                      )}{" "}
-                      nights
+                      ${room.price} × {nights} nights
                     </span>
                     <span className="text-gray-900">
-                      $
-                      {room.price *
-                        Math.ceil(
-                          (new Date(checkOut).getTime() -
-                            new Date(checkIn).getTime()) /
-                            (1000 * 60 * 60 * 24),
-                        )}
+                      ${room.price * nights}
                     </span>
                   </div>
                   <div className="flex justify-between pt-2 border-t">
                     <span>Total</span>
-                    <span className="text-lg">
-                      $
-                      {room.price *
-                        Math.ceil(
-                          (new Date(checkOut).getTime() -
-                            new Date(checkIn).getTime()) /
-                            (1000 * 60 * 60 * 24),
-                        )}
-                    </span>
+                    <span className="text-lg">${room.price * nights}</span>
                   </div>
                 </div>
               )}

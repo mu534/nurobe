@@ -7,7 +7,6 @@ import { cloudinary } from "../../cloudinary.config.ts";
 const router = Router();
 router.use(authMiddleware);
 
-// ================= Multer Setup =================
 const upload = multer({ dest: "temp/" });
 
 // ================= Helper Functions =================
@@ -27,6 +26,16 @@ function sanitizeNumber(value: unknown): number | undefined {
 function sanitizeBoolean(value: unknown): boolean | undefined {
   if (value === undefined) return undefined;
   return value === "true" || value === true;
+}
+
+function sanitizeAmenities(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  try {
+    const parsed = JSON.parse(value);
+    if (Array.isArray(parsed)) return parsed.join(",");
+  } catch {
+    return value.trim() !== "" ? value : undefined;
+  }
 }
 
 // ================= GET ALL ROOMS =================
@@ -59,10 +68,20 @@ router.get("/:id", async (req, res) => {
 // ================= CREATE ROOM =================
 router.post("/", upload.array("images", 2), async (req, res) => {
   try {
-    const { name, type, price, maxGuests, size, bedType, available } = req.body;
+    const {
+      name,
+      type,
+      price,
+      maxGuests,
+      size,
+      bedType,
+      available,
+      amenities,
+    } = req.body;
 
     const imageUrls: string[] = [];
 
+    // Upload new files to Cloudinary
     if (req.files && Array.isArray(req.files)) {
       for (const file of req.files) {
         const result = await cloudinary.uploader.upload(file.path, {
@@ -70,13 +89,6 @@ router.post("/", upload.array("images", 2), async (req, res) => {
         });
         imageUrls.push(result.secure_url);
       }
-    }
-
-    if (req.body.images) {
-      const urls = Array.isArray(req.body.images)
-        ? req.body.images
-        : [req.body.images];
-      imageUrls.push(...urls);
     }
 
     if (imageUrls.length !== 2) {
@@ -95,6 +107,9 @@ router.post("/", upload.array("images", 2), async (req, res) => {
         bedType: sanitizeString(bedType) ?? "",
         available: sanitizeBoolean(available) ?? true,
         image: imageUrls.join(","),
+        amenities:
+          sanitizeAmenities(amenities) ??
+          "WiFi,TV,Air Conditioning,Private Bathroom,Room Service",
       },
     });
 
@@ -112,27 +127,48 @@ router.put("/:id", upload.array("images", 2), async (req, res) => {
     return res.status(400).json({ message: "Invalid room ID" });
 
   try {
-    const { name, type, price, maxGuests, size, bedType, available } = req.body;
+    const {
+      name,
+      type,
+      price,
+      maxGuests,
+      size,
+      bedType,
+      available,
+      amenities,
+    } = req.body;
 
-    const imageUrls: string[] = [];
+    // ✅ Step 1: Collect all values sent under "images" field
+    // The frontend sends both existing URLs (strings) and new files (via multer)
+    // We need to reconstruct the final image list in the correct order.
 
+    // All raw values from req.body.images (could be strings = existing URLs)
+    const bodyImages: string[] = req.body.images
+      ? Array.isArray(req.body.images)
+        ? req.body.images
+        : [req.body.images]
+      : [];
+
+    // Separate existing Cloudinary URLs from placeholder markers
+    const existingUrls = bodyImages.filter(
+      (val) => val.startsWith("http://") || val.startsWith("https://"),
+    );
+
+    // ✅ Step 2: Upload any new files to Cloudinary
+    const newlyUploadedUrls: string[] = [];
     if (req.files && Array.isArray(req.files)) {
       for (const file of req.files) {
         const result = await cloudinary.uploader.upload(file.path, {
           folder: "rooms",
         });
-        imageUrls.push(result.secure_url);
+        newlyUploadedUrls.push(result.secure_url);
       }
     }
 
-    if (req.body.images) {
-      const urls = Array.isArray(req.body.images)
-        ? req.body.images
-        : [req.body.images];
-      imageUrls.push(...urls);
-    }
+    // ✅ Step 3: Merge — existing URLs first, then newly uploaded ones
+    // This preserves the original order of images that weren't changed
+    const finalImageUrls = [...existingUrls, ...newlyUploadedUrls];
 
-    // ✅ Sanitize all values to correct types before passing to Prisma
     const sanitizedName = sanitizeString(name);
     const sanitizedType = sanitizeString(type);
     const sanitizedPrice = sanitizeNumber(price);
@@ -140,6 +176,7 @@ router.put("/:id", upload.array("images", 2), async (req, res) => {
     const sanitizedSize = sanitizeString(size);
     const sanitizedBedType = sanitizeString(bedType);
     const sanitizedAvailable = sanitizeBoolean(available);
+    const sanitizedAmenities = sanitizeAmenities(amenities);
 
     const room = await prisma.room.update({
       where: { id: roomId },
@@ -157,14 +194,20 @@ router.put("/:id", upload.array("images", 2), async (req, res) => {
         ...(sanitizedAvailable !== undefined
           ? { available: sanitizedAvailable }
           : {}),
-        ...(imageUrls.length > 0 ? { image: imageUrls.join(",") } : {}),
+        ...(sanitizedAmenities !== undefined
+          ? { amenities: sanitizedAmenities }
+          : {}),
+        // ✅ Only update images if we have a valid set
+        ...(finalImageUrls.length > 0
+          ? { image: finalImageUrls.join(",") }
+          : {}),
       },
     });
 
     res.json(room);
   } catch (err) {
     console.error(err);
-    res.status(404).json({ message: "Room not found" });
+    res.status(500).json({ message: "Failed to update room" });
   }
 });
 

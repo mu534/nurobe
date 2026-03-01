@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Room } from "../../../types/types";
+import { getRoomAmenities } from "../../../types/types";
 import {
   Upload,
   Trash2,
@@ -7,7 +8,6 @@ import {
   ZoomOut,
   RotateCw,
   RotateCcw,
-  RefreshCw,
   X,
   Wifi,
   Tv,
@@ -17,6 +17,7 @@ import {
   UtensilsCrossed,
   Coffee,
   Armchair,
+  Check,
 } from "lucide-react";
 
 type FormFields = "name" | "type" | "maxGuests" | "price" | "size" | "bedType";
@@ -71,12 +72,20 @@ const AMENITY_OPTIONS = [
   { label: "Balcony", icon: Armchair },
 ];
 
+const DEFAULT_AMENITIES = [
+  "WiFi",
+  "TV",
+  "Air Conditioning",
+  "Private Bathroom",
+  "Room Service",
+];
+
 type EditableImage = {
-  file: File | null; // null = existing URL image (no file)
+  file: File | null;
   preview: string;
   zoom: number;
   rotation: number;
-  isExisting?: boolean; // true = loaded from initialData
+  isExisting?: boolean;
 };
 
 type FormErrors = Partial<Record<FormFields | "images", string>>;
@@ -110,6 +119,11 @@ export function RoomFormModal({
         }))
     : [];
 
+  // Load existing amenities if editing, otherwise use defaults
+  const initialAmenities = initialData
+    ? getRoomAmenities(initialData)
+    : DEFAULT_AMENITIES;
+
   const [formData, setFormData] = useState({
     name: initialData?.name ?? "",
     type: initialData?.type ?? "",
@@ -120,13 +134,7 @@ export function RoomFormModal({
     bedType: initialData?.bedType ?? "",
   });
 
-  const [amenities, setAmenities] = useState<string[]>([
-    "WiFi",
-    "TV",
-    "Air Conditioning",
-    "Private Bathroom",
-    "Room Service",
-  ]);
+  const [amenities, setAmenities] = useState<string[]>(initialAmenities);
   const [images, setImages] = useState<EditableImage[]>(existingImages);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
@@ -134,7 +142,6 @@ export function RoomFormModal({
 
   if (!isOpen) return null;
 
-  // ================== Validation ==================
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
     if (!formData.name.trim()) newErrors.name = "Room name is required";
@@ -145,17 +152,11 @@ export function RoomFormModal({
       newErrors.maxGuests = "At least 1 guest required";
     if (!formData.size.trim()) newErrors.size = "Room size is required";
     if (!formData.bedType.trim()) newErrors.bedType = "Bed type is required";
-
-    const newImageCount = images.filter((i) => !i.isExisting).length;
-    const existingCount = images.filter((i) => i.isExisting).length;
-    const totalImages = newImageCount + existingCount;
-    if (totalImages !== 2) newErrors.images = "Exactly 2 images are required";
-
+    if (images.length !== 2) newErrors.images = "Exactly 2 images are required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // ================== Handlers ==================
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -177,13 +178,7 @@ export function RoomFormModal({
     const files = e.target.files;
     if (!files) return;
     const selectedFiles = Array.from(files);
-    const currentNewCount = images.filter((i) => !i.isExisting).length;
-    if (
-      selectedFiles.length +
-        currentNewCount +
-        images.filter((i) => i.isExisting).length >
-      2
-    ) {
+    if (selectedFiles.length + images.length > 2) {
       setErrors((prev) => ({
         ...prev,
         images: "You can upload exactly 2 images total.",
@@ -257,7 +252,6 @@ export function RoomFormModal({
 
   const handleSubmit = async () => {
     if (!validate()) return;
-
     try {
       setUploading(true);
       setUploadProgress(0);
@@ -272,12 +266,11 @@ export function RoomFormModal({
       formDataToSend.append("available", String(formData.available));
       formDataToSend.append("amenities", JSON.stringify(amenities));
 
-      // Append new files, and existing URLs separately
       images.forEach((img) => {
         if (!img.isExisting && img.file) {
           formDataToSend.append("images", img.file);
         } else if (img.isExisting) {
-          formDataToSend.append("images", img.preview); // existing URL
+          formDataToSend.append("images", img.preview);
         }
       });
 
@@ -291,8 +284,7 @@ export function RoomFormModal({
     }
   };
 
-  const totalImages = images.length;
-  const canAddMore = totalImages < 2;
+  const canAddMore = images.length < 2;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-start justify-center p-4 z-50 overflow-y-auto">
@@ -383,9 +375,9 @@ export function RoomFormModal({
                     }`}
                   >
                     <Icon
-                      className={`w-4 h-4 ${checked ? "text-blue-600" : "text-gray-400"}`}
+                      className={`w-4 h-4 flex-shrink-0 ${checked ? "text-blue-600" : "text-gray-400"}`}
                     />
-                    <span className="truncate">{label}</span>
+                    <span className="truncate text-xs">{label}</span>
                     <span
                       className={`ml-auto w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0 ${
                         checked
@@ -424,12 +416,12 @@ export function RoomFormModal({
               </label>
               <span
                 className={`text-xs px-2 py-1 rounded-full ${
-                  totalImages === 2
+                  images.length === 2
                     ? "bg-green-100 text-green-700"
                     : "bg-yellow-100 text-yellow-700"
                 }`}
               >
-                {totalImages}/2 uploaded
+                {images.length}/2 uploaded
               </span>
             </div>
 
@@ -467,7 +459,6 @@ export function RoomFormModal({
                   key={index}
                   className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50"
                 >
-                  {/* Toolbar */}
                   <div className="flex items-center gap-1 p-3 border-b border-gray-200 bg-white flex-wrap">
                     <span className="text-xs text-gray-500 mr-2">
                       Image {index + 1}
@@ -518,23 +509,21 @@ export function RoomFormModal({
                     <button
                       onClick={() => applyTransformations(index)}
                       className="p-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-                      title="Apply transformations"
+                      title="Apply"
                     >
-                      <RefreshCw size={14} />
+                      <Check size={14} />
                     </button>
                     <button
                       onClick={() => removeImage(index)}
                       className="p-1.5 bg-red-500 text-white rounded hover:bg-red-600 transition ml-auto"
-                      title="Remove image"
+                      title="Remove"
                     >
                       <Trash2 size={14} />
                     </button>
                   </div>
-
-                  {/* Preview */}
                   <div
                     className="w-full bg-black flex items-center justify-center"
-                    style={{ aspectRatio: "16/9" }}
+                    style={{ aspectRatio: "16/16" }}
                   >
                     <img
                       src={img.preview}
