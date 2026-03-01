@@ -1,9 +1,13 @@
 import { Router } from "express";
 import { prisma } from "../../lib/prisma.ts";
+import {
+  sendBookingConfirmation,
+  sendAdminNotification,
+  sendCancellationEmail,
+} from "../services/email.service.ts";
 
 const router = Router();
 
-// ================= Helper =================
 function generateConfirmationNo(): string {
   return `NRB-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 }
@@ -45,7 +49,6 @@ router.post("/", async (req, res) => {
     const tax = subtotal * 0.1;
     const totalPrice = subtotal + tax;
 
-    // Generate unique confirmation number
     let confirmationNo = generateConfirmationNo();
     while (await prisma.booking.findUnique({ where: { confirmationNo } })) {
       confirmationNo = generateConfirmationNo();
@@ -77,6 +80,36 @@ router.post("/", async (req, res) => {
       where: { id: Number(roomId) },
       data: { available: false },
     });
+
+    // Send emails (non-blocking — don't fail booking if email fails)
+    Promise.all([
+      sendBookingConfirmation({
+        guestName,
+        email,
+        confirmationNo,
+        roomName: room.name,
+        checkIn,
+        checkOut,
+        nights,
+        guests: Number(guests),
+        subtotal,
+        tax,
+        totalPrice,
+      }),
+      sendAdminNotification({
+        guestName,
+        email,
+        phone,
+        confirmationNo,
+        roomName: room.name,
+        checkIn,
+        checkOut,
+        nights,
+        guests: Number(guests),
+        totalPrice,
+        specialRequests: specialRequests ?? "",
+      }),
+    ]).catch((err) => console.error("Email send failed:", err));
 
     res.status(201).json(booking);
   } catch (err) {
@@ -118,6 +151,7 @@ router.get("/:id", async (req, res) => {
 router.patch("/:id/status", async (req, res) => {
   try {
     const { status, paymentStatus } = req.body;
+
     const booking = await prisma.booking.update({
       where: { id: Number(req.params.id) },
       data: {
@@ -127,12 +161,21 @@ router.patch("/:id/status", async (req, res) => {
       include: { room: true },
     });
 
-    // If cancelled, mark room as available again
+    // If cancelled → free up room + send cancellation email
     if (status === "cancelled") {
       await prisma.room.update({
         where: { id: booking.roomId },
         data: { available: true },
       });
+
+      sendCancellationEmail({
+        guestName: booking.guestName,
+        email: booking.email,
+        confirmationNo: booking.confirmationNo,
+        roomName: booking.room.name,
+        checkIn: booking.checkIn.toISOString(),
+        checkOut: booking.checkOut.toISOString(),
+      }).catch((err) => console.error("Cancellation email failed:", err));
     }
 
     res.json(booking);
@@ -147,12 +190,12 @@ router.delete("/:id", async (req, res) => {
   try {
     const booking = await prisma.booking.findUnique({
       where: { id: Number(req.params.id) },
+      include: { room: true },
     });
     if (!booking) return res.status(404).json({ message: "Booking not found" });
 
     await prisma.booking.delete({ where: { id: Number(req.params.id) } });
 
-    // Free up the room
     await prisma.room.update({
       where: { id: booking.roomId },
       data: { available: true },
