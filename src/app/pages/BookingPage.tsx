@@ -3,9 +3,9 @@ import { useSearchParams, Link } from "react-router-dom";
 import { getRoomById } from "../../api/rooms";
 import { createBooking } from "../../api/bookings";
 import type { Room } from "../../types/types";
-import { BookingForm } from "../components/BookingForm";
-import { BookingSummary } from "../components/BookingSummary";
-import { BookingConfirmation } from "../components/BookingConfirmation";
+import { BookingForm } from "../components/admin/BookingForm";
+import { BookingSummary } from "../components/admin/BookingSummary";
+import { BookingConfirmation } from "../components/admin/BookingConfirmation";
 import NavBar from "../components/NavBar";
 
 export function BookingPage() {
@@ -100,9 +100,10 @@ export function BookingPage() {
 
       setConfirmationNumber(booking.confirmationNo);
       setBookingConfirmed(true);
-    } catch (err: any) {
+    } catch (err) {
+      const error = err as { response?: { data?: { message?: string } } };
       setError(
-        err?.response?.data?.message || "Booking failed. Please try again.",
+        error?.response?.data?.message || "Booking failed. Please try again.",
       );
     } finally {
       setIsSubmitting(false);
