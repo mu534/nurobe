@@ -82,7 +82,9 @@ export async function sendBookingConfirmation(data: {
             </tr>
           </table>
           <div style="background: #f9fafb; border-radius: 8px; padding: 16px; margin-top: 24px; font-size: 13px; color: #6b7280;">
-            <p style="margin: 0;">💳 <strong>Payment:</strong> Will be collected at the hotel upon arrival.</p>
+           <p style="margin: 0 0 8px;">💳 <strong>Payment:</strong> Will be collected at the hotel upon arrival.</p>
+            <p style="margin: 0 0 8px;">🚫 <strong>Cancellation:</strong> Free until 48 hours before arrival.</p>
+            <p style="margin: 0;">🏨 See you soon!</p>
           </div>
           <p style="margin-top: 24px; color: #4b5563; font-size: 14px;">
             Questions? Contact us at <a href="mailto:${HOTEL_EMAIL}" style="color: #2563eb;">${HOTEL_EMAIL}</a>.
