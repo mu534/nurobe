@@ -24,14 +24,31 @@ model Room {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  name      String
-  email     String    @unique
-  password  String
-  role      String    @default("guest")
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  bookings  Booking[]
+  id            Int            @id @default(autoincrement())
+  name          String
+  email         String         @unique
+  password      String?
+  role          Role           @default(USER)
+  phone         String?
+  googleId      String?        @unique
+  refreshTokens RefreshToken[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  bookings      Booking[]
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}
+
+enum Role {
+  ADMIN
+  USER
 }
 
 model Booking {
