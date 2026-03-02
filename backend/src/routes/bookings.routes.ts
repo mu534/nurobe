@@ -26,6 +26,14 @@ router.post("/", async (req, res) => {
       guests,
     } = req.body;
 
+    console.log("📥 Booking request received:", {
+      guestName,
+      email,
+      roomId,
+      checkIn,
+      checkOut,
+    });
+
     if (!guestName || !email || !phone || !roomId || !checkIn || !checkOut) {
       return res.status(400).json({ message: "Missing required fields" });
     }
@@ -75,15 +83,21 @@ router.post("/", async (req, res) => {
       include: { room: true },
     });
 
-    // Mark room as unavailable
     await prisma.room.update({
       where: { id: Number(roomId) },
       data: { available: false },
     });
 
-    // Send emails (non-blocking — don't fail booking if email fails)
-    Promise.all([
-      sendBookingConfirmation({
+    console.log("✅ Booking created:", confirmationNo);
+    console.log("📧 Attempting to send emails...");
+    console.log("   RESEND_API_KEY set?", !!process.env.RESEND_API_KEY);
+    console.log("   FROM_EMAIL:", process.env.FROM_EMAIL);
+    console.log("   HOTEL_EMAIL:", process.env.HOTEL_EMAIL);
+    console.log("   Sending confirmation to:", email);
+
+    // Send emails — await them so we can catch errors clearly
+    try {
+      await sendBookingConfirmation({
         guestName,
         email,
         confirmationNo,
@@ -95,8 +109,14 @@ router.post("/", async (req, res) => {
         subtotal,
         tax,
         totalPrice,
-      }),
-      sendAdminNotification({
+      });
+      console.log("✅ Confirmation email sent to:", email);
+    } catch (emailErr) {
+      console.error("❌ Confirmation email FAILED:", emailErr);
+    }
+
+    try {
+      await sendAdminNotification({
         guestName,
         email,
         phone,
@@ -108,12 +128,15 @@ router.post("/", async (req, res) => {
         guests: Number(guests),
         totalPrice,
         specialRequests: specialRequests ?? "",
-      }),
-    ]).catch((err) => console.error("Email send failed:", err));
+      });
+      console.log("✅ Admin notification sent to:", process.env.HOTEL_EMAIL);
+    } catch (emailErr) {
+      console.error("❌ Admin notification FAILED:", emailErr);
+    }
 
     res.status(201).json(booking);
   } catch (err) {
-    console.error(err);
+    console.error("❌ Booking creation failed:", err);
     res.status(500).json({ message: "Failed to create booking" });
   }
 });
@@ -161,21 +184,25 @@ router.patch("/:id/status", async (req, res) => {
       include: { room: true },
     });
 
-    // If cancelled → free up room + send cancellation email
     if (status === "cancelled") {
       await prisma.room.update({
         where: { id: booking.roomId },
         data: { available: true },
       });
 
-      sendCancellationEmail({
-        guestName: booking.guestName,
-        email: booking.email,
-        confirmationNo: booking.confirmationNo,
-        roomName: booking.room.name,
-        checkIn: booking.checkIn.toISOString(),
-        checkOut: booking.checkOut.toISOString(),
-      }).catch((err) => console.error("Cancellation email failed:", err));
+      try {
+        await sendCancellationEmail({
+          guestName: booking.guestName,
+          email: booking.email,
+          confirmationNo: booking.confirmationNo,
+          roomName: booking.room.name,
+          checkIn: booking.checkIn.toISOString(),
+          checkOut: booking.checkOut.toISOString(),
+        });
+        console.log("✅ Cancellation email sent to:", booking.email);
+      } catch (emailErr) {
+        console.error("❌ Cancellation email FAILED:", emailErr);
+      }
     }
 
     res.json(booking);
