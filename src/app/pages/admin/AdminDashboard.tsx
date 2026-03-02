@@ -27,7 +27,11 @@ export function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar />
+      <Sidebar
+        onLogout={function (): void {
+          throw new Error("Function not implemented.");
+        }}
+      />
       <div className="flex-1 overflow-auto">
         <header className="bg-white shadow-sm">
           <div className="px-8 py-6">
