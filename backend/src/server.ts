@@ -1,4 +1,10 @@
-import express, { type Request, type Response } from "express";
+import "./passport.config.ts";
+import passport from "passport";
+import express, {
+  type Request,
+  type Response,
+  type NextFunction,
+} from "express";
 import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
@@ -22,6 +28,7 @@ app.use(express.json());
 /* ======================
    API Routes
 ====================== */
+app.use(passport.initialize());
 app.use("/api/auth", authRoutes);
 app.use("/api/rooms", roomsRoutes);
 app.use("/api/bookings", bookingsRoutes);
@@ -58,17 +65,15 @@ interface AppError extends Error {
   statusCode?: number;
 }
 
-app.use((err: AppError, _req: Request, res: Response) => {
+app.use((err: AppError, _req: Request, res: Response, _next: NextFunction) => {
   const status = err.statusCode ?? 500;
-
   console.error(`[ERROR] ${err.message}`);
-
-  res.status(status).json({
+  res.statusCode = status;
+  res.json({
     success: false,
     message: err.message ?? "Internal Server Error",
   });
 });
-
 /* ======================
    Start Server
 ====================== */

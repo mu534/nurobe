@@ -2,10 +2,18 @@ import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { prisma } from "../../lib/prisma.ts";
 
+// ================= Type =================
+// Extend Express Request with our own user shape
 export interface AuthRequest extends Request {
-  user?: unknown;
+  authUser?: {
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+  };
 }
 
+// ================= Auth Middleware =================
 export const authMiddleware = async (
   req: AuthRequest,
   res: Response,
@@ -18,11 +26,17 @@ export const authMiddleware = async (
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
       id: number;
     };
+
     const user = await prisma.user.findUnique({ where: { id: decoded.id } });
     if (!user) return res.status(401).json({ message: "User not found" });
 
-    // cast safely
-    req.user = user as typeof user;
+    // Use authUser instead of user to avoid conflict with Express.User
+    req.authUser = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    };
 
     next();
   } catch (err) {
@@ -31,4 +45,16 @@ export const authMiddleware = async (
     }
     return res.status(500).json({ message: "Internal server error" });
   }
+};
+
+// ================= Admin Middleware =================
+export const adminMiddleware = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  if (req.authUser?.role !== "admin") {
+    return res.status(403).json({ message: "Admin access required" });
+  }
+  next();
 };

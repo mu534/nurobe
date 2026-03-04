@@ -1,6 +1,10 @@
 import { Router } from "express";
 import { prisma } from "../../lib/prisma.ts";
 import {
+  authMiddleware,
+  adminMiddleware,
+} from "../middleware/auth.middleware.ts";
+import {
   sendBookingConfirmation,
   sendAdminNotification,
   sendCancellationEmail,
@@ -95,7 +99,6 @@ router.post("/", async (req, res) => {
     console.log("   HOTEL_EMAIL:", process.env.HOTEL_EMAIL);
     console.log("   Sending confirmation to:", email);
 
-    // Send emails — await them so we can catch errors clearly
     try {
       await sendBookingConfirmation({
         guestName,
@@ -141,8 +144,8 @@ router.post("/", async (req, res) => {
   }
 });
 
-// ================= GET ALL BOOKINGS (Admin) =================
-router.get("/", async (req, res) => {
+// ================= GET ALL BOOKINGS (Admin only) =================
+router.get("/", authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const bookings = await prisma.booking.findMany({
       include: { room: true },
@@ -155,8 +158,8 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ================= GET SINGLE BOOKING =================
-router.get("/:id", async (req, res) => {
+// ================= GET SINGLE BOOKING (Admin only) =================
+router.get("/:id", authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const booking = await prisma.booking.findUnique({
       where: { id: Number(req.params.id) },
@@ -170,50 +173,55 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// ================= UPDATE BOOKING STATUS (Admin) =================
-router.patch("/:id/status", async (req, res) => {
-  try {
-    const { status, paymentStatus } = req.body;
+// ================= UPDATE BOOKING STATUS (Admin only) =================
+router.patch(
+  "/:id/status",
+  authMiddleware,
+  adminMiddleware,
+  async (req, res) => {
+    try {
+      const { status, paymentStatus } = req.body;
 
-    const booking = await prisma.booking.update({
-      where: { id: Number(req.params.id) },
-      data: {
-        ...(status ? { status } : {}),
-        ...(paymentStatus ? { paymentStatus } : {}),
-      },
-      include: { room: true },
-    });
-
-    if (status === "cancelled") {
-      await prisma.room.update({
-        where: { id: booking.roomId },
-        data: { available: true },
+      const booking = await prisma.booking.update({
+        where: { id: Number(req.params.id) },
+        data: {
+          ...(status ? { status } : {}),
+          ...(paymentStatus ? { paymentStatus } : {}),
+        },
+        include: { room: true },
       });
 
-      try {
-        await sendCancellationEmail({
-          guestName: booking.guestName,
-          email: booking.email,
-          confirmationNo: booking.confirmationNo,
-          roomName: booking.room.name,
-          checkIn: booking.checkIn.toISOString(),
-          checkOut: booking.checkOut.toISOString(),
+      if (status === "cancelled") {
+        await prisma.room.update({
+          where: { id: booking.roomId },
+          data: { available: true },
         });
-        console.log("✅ Cancellation email sent to:", booking.email);
-      } catch (emailErr) {
-        console.error("❌ Cancellation email FAILED:", emailErr);
+
+        try {
+          await sendCancellationEmail({
+            guestName: booking.guestName,
+            email: booking.email,
+            confirmationNo: booking.confirmationNo,
+            roomName: booking.room.name,
+            checkIn: booking.checkIn.toISOString(),
+            checkOut: booking.checkOut.toISOString(),
+          });
+          console.log("✅ Cancellation email sent to:", booking.email);
+        } catch (emailErr) {
+          console.error("❌ Cancellation email FAILED:", emailErr);
+        }
       }
+
+      res.json(booking);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Failed to update booking" });
     }
+  },
+);
 
-    res.json(booking);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to update booking" });
-  }
-});
-
-// ================= DELETE BOOKING (Admin) =================
-router.delete("/:id", async (req, res) => {
+// ================= DELETE BOOKING (Admin only) =================
+router.delete("/:id", authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const booking = await prisma.booking.findUnique({
       where: { id: Number(req.params.id) },
