@@ -1,34 +1,41 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import { prisma } from "../../lib/prisma.ts";
+import type { UserPayload } from "../utils/jwt";
 
 export interface AuthRequest extends Request {
-  user?: unknown;
+  user?: UserPayload;
 }
 
-export const authMiddleware = async (
+export const protect = (
   req: AuthRequest,
   res: Response,
   next: NextFunction,
 ) => {
-  const token = req.headers.authorization?.split(" ")[1];
-  if (!token) return res.status(401).json({ message: "Unauthorized" });
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
-      id: number;
-    };
-    const user = await prisma.user.findUnique({ where: { id: decoded.id } });
-    if (!user) return res.status(401).json({ message: "User not found" });
-
-    // cast safely
-    req.user = user as typeof user;
-
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_ACCESS_SECRET!,
+    ) as unknown as UserPayload;
+    req.user = decoded;
     next();
-  } catch (err) {
-    if (err instanceof Error) {
-      return res.status(401).json({ message: "Invalid token" });
-    }
-    return res.status(500).json({ message: "Internal server error" });
+  } catch {
+    res.status(401).json({ message: "Invalid token" });
   }
 };
+
+// Role-based authorization
+export const authorize =
+  (...roles: Array<"ADMIN" | "USER">) =>
+  (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+    next();
+  };
