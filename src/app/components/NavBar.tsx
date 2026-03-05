@@ -12,6 +12,44 @@ import {
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 
+// ================= Avatar Component =================
+function UserAvatar({
+  name,
+  avatar,
+  size = "sm",
+}: {
+  name: string;
+  avatar?: string | null;
+  size?: "sm" | "lg";
+}) {
+  const dimension = size === "lg" ? "w-10 h-10 text-base" : "w-8 h-8 text-sm";
+
+  if (avatar) {
+    return (
+      <img
+        src={avatar}
+        alt={name}
+        referrerPolicy="no-referrer"
+        className={`${dimension} rounded-full object-cover ring-2 ring-white/30`}
+        onError={(e) => {
+          // Fallback to letter if image fails to load
+          e.currentTarget.style.display = "none";
+          e.currentTarget.nextElementSibling?.classList.remove("hidden");
+        }}
+      />
+    );
+  }
+
+  return (
+    <div
+      className={`${dimension} bg-blue-500 rounded-full flex items-center justify-center font-semibold text-white`}
+    >
+      {name.charAt(0).toUpperCase()}
+    </div>
+  );
+}
+
+// ================= NavBar =================
 const NavBar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -130,16 +168,13 @@ const NavBar = () => {
             {/* CTA Buttons */}
             <div className="hidden md:flex items-center gap-4">
               {user ? (
-                // ====== Logged in — show user menu ======
                 <div
                   className="relative"
                   onMouseEnter={() => setIsUserMenuOpen(true)}
                   onMouseLeave={() => setIsUserMenuOpen(false)}
                 >
                   <button className="flex items-center gap-2 text-white hover:text-blue-400 transition-colors">
-                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-sm font-semibold">
-                      {user.name.charAt(0).toUpperCase()}
-                    </div>
+                    <UserAvatar name={user.name} avatar={user.avatar} />
                     <span className="font-medium text-sm">
                       {user.name.split(" ")[0]}
                     </span>
@@ -149,12 +184,29 @@ const NavBar = () => {
                   </button>
 
                   <div
-                    className={`absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-xl overflow-hidden transition-all duration-300 ${
+                    className={`absolute top-full right-0 mt-2 w-52 bg-white rounded-lg shadow-xl overflow-hidden transition-all duration-300 ${
                       isUserMenuOpen
                         ? "opacity-100 visible translate-y-0"
                         : "opacity-0 invisible -translate-y-2"
                     }`}
                   >
+                    {/* User info */}
+                    <div className="px-4 py-3 flex items-center gap-3 border-b border-gray-100">
+                      <UserAvatar
+                        name={user.name}
+                        avatar={user.avatar}
+                        size="lg"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {user.name}
+                        </p>
+                        <p className="text-xs text-gray-400 truncate">
+                          {user.email}
+                        </p>
+                      </div>
+                    </div>
+
                     {user.role === "ADMIN" && (
                       <Link
                         to="/admin"
@@ -164,9 +216,7 @@ const NavBar = () => {
                         Admin Dashboard
                       </Link>
                     )}
-                    <div className="px-4 py-2 border-t border-gray-100">
-                      <p className="text-xs text-gray-400">{user.email}</p>
-                    </div>
+
                     <button
                       onClick={handleLogout}
                       className="flex items-center gap-2 w-full px-4 py-3 text-red-600 hover:bg-red-50 transition-colors text-sm border-t border-gray-100"
@@ -177,7 +227,6 @@ const NavBar = () => {
                   </div>
                 </div>
               ) : (
-                // ====== Not logged in ======
                 <Link
                   to="/login"
                   className="text-white font-medium hover:text-blue-400 transition-colors flex items-center gap-1"
@@ -255,9 +304,7 @@ const NavBar = () => {
             {user ? (
               <>
                 <div className="flex items-center gap-3 py-2 border-b border-white/10">
-                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-sm font-semibold text-white">
-                    {user.name.charAt(0).toUpperCase()}
-                  </div>
+                  <UserAvatar name={user.name} avatar={user.avatar} size="lg" />
                   <div>
                     <p className="text-white text-sm font-medium">
                       {user.name}

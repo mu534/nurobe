@@ -17,20 +17,27 @@ passport.use(
       try {
         const email = profile.emails?.[0]?.value;
         const name = profile.displayName;
+        const avatar = profile.photos?.[0]?.value ?? null;
 
         if (!email) return done(new Error("No email from Google"), undefined);
 
-        // Find or create user
         let user = await prisma.user.findUnique({ where: { email } });
 
         if (!user) {
+          // Create new user
           user = await prisma.user.create({
             data: {
               name,
               email,
               password: "",
               role: "USER" as never,
+              avatar,
             },
+          });
+        } else {
+          user = await prisma.user.update({
+            where: { email },
+            data: { avatar },
           });
         }
 
@@ -39,6 +46,7 @@ passport.use(
           name: user.name,
           email: user.email,
           role: user.role,
+          avatar: user.avatar,
         });
       } catch (err) {
         return done(err as Error, undefined);

@@ -14,7 +14,7 @@ import { AdminBookings } from "./app/pages/admin/AdminBookings";
 import { AdminDashboard } from "./app/pages/admin/AdminDashboard";
 import { AdminPayments } from "./app/pages/admin/AdminPayments";
 import { AdminRooms } from "./app/pages/admin/AdminRooms";
-
+import { AuthCallbackPage } from "./app/pages/AuthCallbackPage";
 export default function App() {
   return (
     <Router>
@@ -26,6 +26,7 @@ export default function App() {
         <Route path="/booking" element={<BookingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/contact" element={<ContactPage />} />
+        <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
         {/* admin Routes */}
         <Route path="/admin" element={<AdminDashboard />} />
