@@ -28,8 +28,8 @@ passport.use(
             data: {
               name,
               email,
-              password: "", // no password for OAuth users
-              role: "guest",
+              password: "",
+              role: "USER" as never,
             },
           });
         }

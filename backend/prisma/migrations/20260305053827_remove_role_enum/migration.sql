@@ -1,0 +1,18 @@
+/*
+  Warnings:
+
+  - You are about to drop the column `guests` on the `Booking` table. All the data in the column will be lost.
+  - The `role` column on the `User` table would be dropped and recreated. This will lead to data loss if there is data in the column.
+  - Added the required column `USER` to the `Booking` table without a default value. This is not possible if the table is not empty.
+
+*/
+-- AlterTable
+ALTER TABLE "Booking" DROP COLUMN "guests",
+ADD COLUMN     "USER" INTEGER NOT NULL;
+
+-- AlterTable
+ALTER TABLE "User" DROP COLUMN "role",
+ADD COLUMN     "role" TEXT NOT NULL DEFAULT 'USER';
+
+-- DropEnum
+DROP TYPE "Role";

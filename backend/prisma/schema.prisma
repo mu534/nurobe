@@ -29,7 +29,7 @@ model User {
   email         String         @unique
   password      String         @default("")
   phone         String         @default("")
-  role          Role           @default(guest)
+  role          String         @default("USER")
   googleId      String?        @unique
   refreshTokens RefreshToken[]
   createdAt     DateTime       @default(now())
@@ -46,11 +46,6 @@ model RefreshToken {
   expiresAt DateTime
 }
 
-enum Role {
-  ADMIN
-  guest
-}
-
 model Booking {
   id              Int      @id @default(autoincrement())
   confirmationNo  String   @unique
@@ -62,7 +57,7 @@ model Booking {
   userId          Int?
   checkIn         DateTime
   checkOut        DateTime
-  guests          Int
+  USER            Int
   nights          Int
   subtotal        Float
   tax             Float

@@ -19,7 +19,7 @@ const BACKEND_URL =
 export function LoginPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { login, user, loading } = useAuth();
+  const { login, loading } = useAuth();
 
   const [isLogin, setIsLogin] = useState<boolean>(true);
   const [email, setEmail] = useState<string>("");
@@ -28,28 +28,16 @@ export function LoginPage() {
   const [phone, setPhone] = useState<string>("");
   const [remember, setRemember] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
-
   const [error, setError] = useState<string>("");
   const [submitting, setSubmitting] = useState<boolean>(false);
-
-  // Redirect if logged in
-  useEffect(() => {
-    if (!loading && user) {
-      navigate(user.role === "admin" ? "/admin" : "/");
-    }
-  }, [user, loading, navigate]);
 
   // OAuth errors
   useEffect(() => {
     const oauthError = searchParams.get("error");
-
-    if (oauthError === "google_failed") {
+    if (oauthError === "google_failed")
       setError("Google sign-in failed. Please try again.");
-    }
-
-    if (oauthError === "invalid_token") {
+    if (oauthError === "invalid_token")
       setError("Authentication failed. Please try again.");
-    }
   }, [searchParams]);
 
   // Load remembered email
@@ -66,34 +54,26 @@ export function LoginPage() {
       setError("Please enter a valid email address.");
       return false;
     }
-
     if (password.length < 6) {
       setError("Password must be at least 6 characters.");
       return false;
     }
-
     if (!isLogin && name.trim().length < 3) {
       setError("Full name must be at least 3 characters.");
       return false;
     }
-
     return true;
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
-
     if (!validateForm()) return;
-
     setSubmitting(true);
 
     try {
       if (isLogin) {
-        const res = await api.post("/auth/login", {
-          email,
-          password,
-        });
+        const res = await api.post("/auth/login", { email, password });
 
         if (remember) {
           localStorage.setItem("remembered_email", email);
@@ -102,7 +82,8 @@ export function LoginPage() {
         }
 
         login(res.data.token, res.data.user);
-        navigate(res.data.user.role === "admin" ? "/admin" : "/");
+
+        navigate(res.data.user.role === "ADMIN" ? "/admin" : "/");
       } else {
         const res = await api.post("/auth/register", {
           name,
@@ -110,7 +91,6 @@ export function LoginPage() {
           phone,
           password,
         });
-
         login(res.data.token, res.data.user);
         navigate("/");
       }
@@ -143,7 +123,6 @@ export function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/" className="text-3xl font-semibold text-gray-900">
             Nurobe Hotel
@@ -238,7 +217,6 @@ export function LoginPage() {
                   type="text"
                   placeholder="Enter your full name"
                 />
-
                 <InputField
                   label="Phone Number"
                   icon={<Phone className="w-4 h-4 text-gray-400" />}
@@ -302,7 +280,6 @@ export function LoginPage() {
                   />
                   <span className="text-sm text-gray-600">Remember me</span>
                 </label>
-
                 <button
                   type="button"
                   className="text-sm text-blue-600 hover:underline"
@@ -336,8 +313,7 @@ export function LoginPage() {
   );
 }
 
-/* Reusable Input Component */
-
+// ================= Reusable Input =================
 interface InputFieldProps {
   label: string;
   icon: React.ReactNode;

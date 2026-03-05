@@ -31,7 +31,7 @@ router.post("/register", async (req: Request, res: Response) => {
         email,
         password: hashed,
         phone: phone ?? "",
-        role: "guest",
+        role: "USER" as never,
       },
     });
 

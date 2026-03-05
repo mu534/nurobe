@@ -1,10 +1,30 @@
-import { Link } from "react-router-dom";
-import { Menu, X, Phone, Mail, ChevronDown } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  Menu,
+  X,
+  Phone,
+  Mail,
+  ChevronDown,
+  LogOut,
+  User,
+  LayoutDashboard,
+} from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "../../context/AuthContext";
 
 const NavBar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+    setIsMenuOpen(false);
+    setIsUserMenuOpen(false);
+  };
 
   const mainLinks = [
     { to: "/", label: "Home" },
@@ -22,7 +42,7 @@ const NavBar = () => {
     <header className="absolute top-0 left-0 right-0 z-50">
       <div className="bg-gradient-to-b from-black/60 via-black/40 to-transparent backdrop-blur-sm">
         <div className="container mx-auto px-4 lg:px-8">
-          {/* Top bar - optional contact info */}
+          {/* Top bar */}
           <div className="hidden lg:flex items-center justify-end gap-6 py-2 text-white/80 text-sm border-b border-white/10">
             <a
               href="tel:+251912345678"
@@ -31,7 +51,6 @@ const NavBar = () => {
               <Phone className="w-4 h-4" />
               +251 91 234 5678
             </a>
-
             <a
               href="mailto:info@nurobehotel.com"
               className="flex items-center gap-2 hover:text-white transition-colors"
@@ -63,7 +82,7 @@ const NavBar = () => {
                   className="text-white font-medium hover:text-blue-400 transition-colors relative group"
                 >
                   {link.label}
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-400 group-hover:w-full transition-all duration-300"></span>
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-400 group-hover:w-full transition-all duration-300" />
                 </Link>
               ))}
 
@@ -78,10 +97,8 @@ const NavBar = () => {
                   <ChevronDown
                     className={`w-4 h-4 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`}
                   />
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-400 group-hover:w-full transition-all duration-300"></span>
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-400 group-hover:w-full transition-all duration-300" />
                 </button>
-
-                {/* Dropdown Menu */}
                 <div
                   className={`absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-xl overflow-hidden transition-all duration-300 ${
                     isDropdownOpen
@@ -106,18 +123,70 @@ const NavBar = () => {
                 className="text-white font-medium hover:text-blue-400 transition-colors relative group"
               >
                 Contact
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-400 group-hover:w-full transition-all duration-300"></span>
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-400 group-hover:w-full transition-all duration-300" />
               </Link>
             </nav>
 
             {/* CTA Buttons */}
             <div className="hidden md:flex items-center gap-4">
-              <Link
-                to="/login"
-                className="text-white font-medium hover:text-blue-400 transition-colors"
-              >
-                Login
-              </Link>
+              {user ? (
+                // ====== Logged in — show user menu ======
+                <div
+                  className="relative"
+                  onMouseEnter={() => setIsUserMenuOpen(true)}
+                  onMouseLeave={() => setIsUserMenuOpen(false)}
+                >
+                  <button className="flex items-center gap-2 text-white hover:text-blue-400 transition-colors">
+                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-sm font-semibold">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="font-medium text-sm">
+                      {user.name.split(" ")[0]}
+                    </span>
+                    <ChevronDown
+                      className={`w-4 h-4 transition-transform ${isUserMenuOpen ? "rotate-180" : ""}`}
+                    />
+                  </button>
+
+                  <div
+                    className={`absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-xl overflow-hidden transition-all duration-300 ${
+                      isUserMenuOpen
+                        ? "opacity-100 visible translate-y-0"
+                        : "opacity-0 invisible -translate-y-2"
+                    }`}
+                  >
+                    {user.role === "ADMIN" && (
+                      <Link
+                        to="/admin"
+                        className="flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors text-sm"
+                      >
+                        <LayoutDashboard className="w-4 h-4" />
+                        Admin Dashboard
+                      </Link>
+                    )}
+                    <div className="px-4 py-2 border-t border-gray-100">
+                      <p className="text-xs text-gray-400">{user.email}</p>
+                    </div>
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center gap-2 w-full px-4 py-3 text-red-600 hover:bg-red-50 transition-colors text-sm border-t border-gray-100"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                // ====== Not logged in ======
+                <Link
+                  to="/login"
+                  className="text-white font-medium hover:text-blue-400 transition-colors flex items-center gap-1"
+                >
+                  <User className="w-4 h-4" />
+                  Login
+                </Link>
+              )}
+
               <Link
                 to="/rooms"
                 className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-2.5 rounded-full font-semibold hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl hover:scale-105"
@@ -144,7 +213,7 @@ const NavBar = () => {
         {/* Mobile Navigation */}
         <div
           className={`md:hidden overflow-hidden transition-all duration-300 ${
-            isMenuOpen ? "max-h-[600px] opacity-100" : "max-h-0 opacity-0"
+            isMenuOpen ? "max-h-[700px] opacity-100" : "max-h-0 opacity-0"
           }`}
         >
           <nav className="container mx-auto px-4 pb-6 flex flex-col gap-4 bg-black/40 backdrop-blur-md">
@@ -159,7 +228,6 @@ const NavBar = () => {
               </Link>
             ))}
 
-            {/* Mobile Explore Section */}
             <div className="border-b border-white/10">
               <div className="text-white/60 text-sm font-semibold mb-2 px-2">
                 Explore
@@ -184,13 +252,47 @@ const NavBar = () => {
               Contact
             </Link>
 
-            <Link
-              to="/login"
-              onClick={() => setIsMenuOpen(false)}
-              className="text-white font-medium hover:text-blue-400 transition-colors py-2 border-b border-white/10"
-            >
-              Login
-            </Link>
+            {user ? (
+              <>
+                <div className="flex items-center gap-3 py-2 border-b border-white/10">
+                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-sm font-semibold text-white">
+                    {user.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="text-white text-sm font-medium">
+                      {user.name}
+                    </p>
+                    <p className="text-white/50 text-xs">{user.email}</p>
+                  </div>
+                </div>
+                {user.role === "ADMIN" && (
+                  <Link
+                    to="/admin"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center gap-2 text-white font-medium hover:text-blue-400 transition-colors py-2 border-b border-white/10"
+                  >
+                    <LayoutDashboard className="w-4 h-4" />
+                    Admin Dashboard
+                  </Link>
+                )}
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 text-red-400 font-medium hover:text-red-300 transition-colors py-2"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/login"
+                onClick={() => setIsMenuOpen(false)}
+                className="text-white font-medium hover:text-blue-400 transition-colors py-2 border-b border-white/10"
+              >
+                Login
+              </Link>
+            )}
+
             <Link
               to="/rooms"
               onClick={() => setIsMenuOpen(false)}
