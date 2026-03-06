@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-
+import logo from "../../assets/images/logo.jpg";
 // ================= Avatar Component =================
 function UserAvatar({
   name,
@@ -105,8 +105,14 @@ const NavBar = () => {
               to="/"
               className="group flex items-center gap-2 text-white text-2xl lg:text-3xl font-bold tracking-tight"
             >
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                <span className="text-white font-bold text-xl">N</span>
+              <div className="">
+                <span className="text-white font-bold text-xl">
+                  <img
+                    className="w-10 h-10  rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform"
+                    src={logo}
+                    alt="Nurobe Hotel"
+                  />
+                </span>
               </div>
               <span className="hidden sm:inline">Nurobe Hotel</span>
             </Link>
