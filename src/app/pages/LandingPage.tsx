@@ -1,31 +1,40 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import nurobe3 from "../../assets/images/nurobe3.png";
 import Attractions from "../components/Attractions";
 import { Search, MapPin, Users, Calendar } from "lucide-react";
-import { rooms } from "../data/hotelData";
 import { GuestReviews } from "../components/GuestReviews";
 import { HotelDescription } from "../components/HotelDescription";
 import NavBar from "../components/NavBar";
 import Dining from "../components/Dining";
 import Services from "../components/Services";
+import { getRooms } from "../../api/rooms";
+import type { Room } from "../../types/types";
 
 export function LandingPage() {
+  const navigate = useNavigate();
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [guests, setGuests] = useState("2");
+  const [featuredRooms, setFeaturedRooms] = useState<Room[]>([]);
+  const [roomsLoading, setRoomsLoading] = useState(true);
+
+  useEffect(() => {
+    getRooms()
+      .then((data) =>
+        setFeaturedRooms(data.filter((r) => r.available).slice(0, 3)),
+      )
+      .catch((err) => console.error("Failed to load rooms:", err))
+      .finally(() => setRoomsLoading(false));
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Navigate to rooms page with search params
-    window.location.href = `/rooms?checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}`;
+    navigate(`/rooms?checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}`);
   };
-
-  const featuredRooms = rooms.filter((room) => room.available).slice(0, 3);
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
       <NavBar />
 
       {/* Hero Section */}
@@ -56,8 +65,7 @@ export function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="flex flex-col">
               <label className="text-sm text-gray-600 mb-2 flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                Check-in
+                <Calendar className="w-4 h-4" /> Check-in
               </label>
               <input
                 type="date"
@@ -69,8 +77,7 @@ export function LandingPage() {
             </div>
             <div className="flex flex-col">
               <label className="text-sm text-gray-600 mb-2 flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                Check-out
+                <Calendar className="w-4 h-4" /> Check-out
               </label>
               <input
                 type="date"
@@ -82,8 +89,7 @@ export function LandingPage() {
             </div>
             <div className="flex flex-col">
               <label className="text-sm text-gray-600 mb-2 flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                Guests
+                <Users className="w-4 h-4" /> Guests
               </label>
               <select
                 value={guests}
@@ -102,13 +108,13 @@ export function LandingPage() {
                 type="submit"
                 className="w-full bg-blue-600 text-white rounded-lg px-6 py-3 hover:bg-blue-700 transition flex items-center justify-center gap-2"
               >
-                <Search className="w-5 h-5" />
-                Search
+                <Search className="w-5 h-5" /> Search
               </button>
             </div>
           </div>
         </form>
       </section>
+
       <section>
         <HotelDescription />
       </section>
@@ -122,50 +128,77 @@ export function LandingPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {featuredRooms.map((room) => (
-            <Link
-              key={room.id}
-              to={`/room/${room.id}`}
-              className="bg-white rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition group"
-            >
-              <div className="relative h-64 overflow-hidden">
-                <img
-                  src={room.image}
-                  alt={room.name}
-                  className="w-full h-full object-cover group-hover:scale-110 transition duration-500"
-                />
-              </div>
-              <div className="p-6">
-                <h3 className="text-xl mb-2">{room.name}</h3>
-                <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                  {room.description}
-                </p>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {room.amenities.slice(0, 3).map((amenity, idx) => (
-                    <span
-                      key={idx}
-                      className="text-xs bg-gray-100 px-2 py-1 rounded"
-                    >
-                      {amenity}
-                    </span>
-                  ))}
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-2xl text-blue-600">
-                      ${room.price}
-                    </span>
-                    <span className="text-gray-500 text-sm"> / night</span>
+        {roomsLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="bg-gray-100 rounded-lg h-96 animate-pulse"
+              />
+            ))}
+          </div>
+        ) : featuredRooms.length === 0 ? (
+          <div className="text-center py-12 text-gray-500">
+            No rooms available at the moment.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {featuredRooms.map((room) => {
+              const firstImage = room.image.split(",")[0];
+              const amenities = room.amenities.split(",").slice(0, 3);
+
+              return (
+                <Link
+                  key={room.id}
+                  to={`/room/${room.id}`}
+                  className="bg-white rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition group"
+                >
+                  <div className="relative h-64 overflow-hidden">
+                    <img
+                      src={firstImage}
+                      alt={room.name}
+                      className="w-full h-full object-contain bg-gray-100 group-hover:scale-105 transition duration-500"
+                    />
+                    <div className="absolute top-3 right-3 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+                      {room.type}
+                    </div>
                   </div>
-                  <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
-                    View Details
-                  </button>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+                  <div className="p-6">
+                    <h3 className="text-xl mb-2">{room.name}</h3>
+                    <div className="flex items-center gap-3 text-sm text-gray-500 mb-3">
+                      <span>{room.bedType}</span>
+                      <span>·</span>
+                      <span>{room.size}</span>
+                      <span>·</span>
+                      <span>Up to {room.maxGuests} guests</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {amenities.map((amenity, idx) => (
+                        <span
+                          key={idx}
+                          className="text-xs bg-gray-100 px-2 py-1 rounded"
+                        >
+                          {amenity.trim()}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-2xl text-blue-600">
+                          ${room.price}
+                        </span>
+                        <span className="text-gray-500 text-sm"> / night</span>
+                      </div>
+                      <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+                        View Details
+                      </button>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
 
         <div className="text-center mt-10">
           <Link
@@ -176,6 +209,7 @@ export function LandingPage() {
           </Link>
         </div>
       </section>
+
       <div>
         <Attractions />
       </div>
@@ -214,22 +248,22 @@ export function LandingPage() {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white p-6 rounded-lg shadow text-center">
-                <div className="text-3xl text-blue-600 mb-2">50+</div>
-                <div className="text-gray-600">Rooms</div>
-              </div>
-              <div className="bg-white p-6 rounded-lg shadow text-center">
-                <div className="text-3xl text-blue-600 mb-2">4.8</div>
-                <div className="text-gray-600">Guest Rating</div>
-              </div>
-              <div className="bg-white p-6 rounded-lg shadow text-center">
-                <div className="text-3xl text-blue-600 mb-2">24/7</div>
-                <div className="text-gray-600">Service</div>
-              </div>
-              <div className="bg-white p-6 rounded-lg shadow text-center">
-                <div className="text-3xl text-blue-600 mb-2">10+</div>
-                <div className="text-gray-600">Years</div>
-              </div>
+              {[
+                { value: "50+", label: "Rooms" },
+                { value: "4.8", label: "Guest Rating" },
+                { value: "24/7", label: "Service" },
+                { value: "10+", label: "Years" },
+              ].map((stat) => (
+                <div
+                  key={stat.label}
+                  className="bg-white p-6 rounded-lg shadow text-center"
+                >
+                  <div className="text-3xl text-blue-600 mb-2">
+                    {stat.value}
+                  </div>
+                  <div className="text-gray-600">{stat.label}</div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -292,4 +326,5 @@ export function LandingPage() {
     </div>
   );
 }
+
 export default LandingPage;
