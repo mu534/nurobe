@@ -21,16 +21,42 @@ export const getBookings = async (req: AuthRequest, res: Response) => {
 };
 
 export const createBooking = async (req: AuthRequest, res: Response) => {
-  const { roomId, checkIn, checkOut } = req.body;
+  const { roomId, checkIn, checkOut, guestName, email, phone, specialRequests, guests } = req.body;
 
   if (!req.user) return res.status(401).json({ message: "Unauthorized" });
 
+  const room = await prisma.room.findUnique({ where: { id: Number(roomId) } });
+  if (!room) return res.status(404).json({ message: "Room not found" });
+
+  const checkInDate = new Date(checkIn);
+  const checkOutDate = new Date(checkOut);
+  const nights = Math.ceil(
+    (checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24),
+  );
+  const subtotal = room.price * nights;
+  const tax = subtotal * 0.1;
+  const totalPrice = subtotal + tax;
+
+  const confirmationNo = `NRB-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+
   const booking = await prisma.booking.create({
     data: {
-      roomId,
+      confirmationNo,
+      guestName: guestName ?? req.user.name,
+      email: email ?? req.user.email,
+      phone: phone ?? "",
+      specialRequests: specialRequests ?? "",
+      roomId: Number(roomId),
       userId: req.user.id,
-      checkIn: new Date(checkIn),
-      checkOut: new Date(checkOut),
+      checkIn: checkInDate,
+      checkOut: checkOutDate,
+      guests: Number(guests) || 1,
+      nights,
+      subtotal,
+      tax,
+      totalPrice,
+      status: "pending",
+      paymentStatus: "unpaid",
     },
     include: { room: true, user: true },
   });

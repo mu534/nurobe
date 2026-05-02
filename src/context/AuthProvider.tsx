@@ -77,8 +77,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         login,
         logout,
-        isAdmin: user?.role === "admin",
-        isGuest: user?.role === "guest",
+        isAdmin: user?.role === "ADMIN",
+        isGuest: (user?.role as string) === "GUEST",
       }}
     >
       {children}

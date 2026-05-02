@@ -28,7 +28,7 @@ export function PaymentMethodsChart({
             outerRadius={80}
             dataKey="value"
           >
-            {data.map((entry, index) => (
+            {data.map((_, index) => (
               <Cell key={index} fill={colors[index % colors.length]} />
             ))}
           </Pie>

@@ -58,7 +58,7 @@ model Booking {
   userId          Int?
   checkIn         DateTime
   checkOut        DateTime
-  USER            Int
+  guests          Int
   nights          Int
   subtotal        Float
   tax             Float
