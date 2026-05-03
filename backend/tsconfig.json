@@ -1,32 +1,25 @@
 {
   "compilerOptions": {
-    "module": "ESNext",
-    "moduleResolution": "bundler",          // Best for Vite-like or custom paths; fallback to "NodeNext" if issues
-    "target": "ES2023",
-    "types": ["node"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "target": "ES2022",
+    "outDir": "./dist",
+    "rootDir": "./src",
     "esModuleInterop": true,
     "strict": true,
-    "jsx": "react-jsx",
-    "allowImportingTsExtensions": true,
-    "noEmit": true,
-    "verbatimModuleSyntax": true,
-    "isolatedModules": true,
-    "noUncheckedSideEffectImports": true,
-    "moduleDetection": "force",
     "skipLibCheck": true,
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
-    "baseUrl": ".",                         // Add this for paths to work relative to project root
-    "paths": {
-      "@prisma/client": ["./generated/prisma/client/index.ts"],   // Point to index.ts (or index.js if compiled)
-      "@prisma/client/*": ["./generated/prisma/client/*"]
-    }
+    "types": [
+      "node"
+    ]
   },
   "include": [
-    "src/**/*",
-    "generated/prisma/client/**/*"           // Ensures TS sees the generated .ts/.d.ts files
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
   ]
 }
